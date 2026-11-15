@@ -75,7 +75,7 @@ Every push to `main` republishes the site automatically.
 
 ## Email on the domain
 
-The site's buttons currently open an email to `chisalajh@gmail.com`, a
+The site's buttons currently open an email to `chisala.jh@gmail.com`, a
 temporary address, so the site can go live before the domain mailbox exists.
 When you are ready for an address on the domain (for example
 `hello@amanogeospatial.com`), set it up as below and then swap the address in
