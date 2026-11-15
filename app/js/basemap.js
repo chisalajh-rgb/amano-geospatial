@@ -63,7 +63,7 @@ export class Basemap {
     this.img.style.opacity = this.opacity;
     if (this.outline) this.outline.remove();
     const [tl, tr, bl, br] = this.corners;
-    this.outline = L.polygon([tl, tr, br, bl], { color: '#24382f', weight: 1.5, fill: false, dashArray: '5 4', interactive: false }).addTo(this.map);
+    this.outline = L.polygon([tl, tr, br, bl], { color: '#24506b', weight: 1.5, fill: false, dashArray: '5 4', interactive: false }).addTo(this.map);
     this._place();
     return true;
   }
@@ -89,7 +89,7 @@ export class Basemap {
     L.geoJSON(geojson, {
       style: (f) => (f.geometry.type === 'LineString'
         ? { color: '#a8402f', weight: 3 }
-        : { color: '#24382f', weight: 1.5, fillColor: colorFor(f.properties.code), fillOpacity: 0.45 }),
+        : { color: '#24506b', weight: 1.5, fillColor: colorFor(f.properties.code), fillOpacity: 0.45 }),
       pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 6, color: '#fff', weight: 2, fillColor: '#a8402f', fillOpacity: 1 }),
       onEachFeature: (f, layer) => {
         const p = f.properties, label = [p.code, p.name].filter(Boolean).join(' · ');

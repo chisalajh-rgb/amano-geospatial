@@ -3,7 +3,7 @@ Writes the animated mark (for the web) and a still version (favicon, PNG icons, 
 Run: python3 tools/make_logo.py   (needs rsvg-convert and Pillow for the PNG/ICO files)"""
 import io, math, os, subprocess
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PINE, MOSS, CLAY, OCHRE = "#24382f", "#3f6b55", "#b4612f", "#d99a5b"
+PINE, MOSS, CLAY, OCHRE = "#24506b", "#4a94c4", "#3d86b8", "#9fd0ee"
 
 def mark(animated):
     tilt = -24
@@ -34,20 +34,20 @@ def mark(animated):
   </style>''' if animated else ''
     return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Amano Geospatial">
   <defs>
-    <radialGradient id="sphere" cx="36%" cy="30%" r="78%"><stop offset="0" stop-color="#6f9c82"/><stop offset=".5" stop-color="{MOSS}"/><stop offset="1" stop-color="#17251f"/></radialGradient>
-    <radialGradient id="sat" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#f0c08a"/><stop offset="1" stop-color="{CLAY}"/></radialGradient>
+    <radialGradient id="sphere" cx="36%" cy="30%" r="78%"><stop offset="0" stop-color="#bfe3f7"/><stop offset=".5" stop-color="{MOSS}"/><stop offset="1" stop-color="#1d4460"/></radialGradient>
+    <radialGradient id="sat" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="{CLAY}"/></radialGradient>
     <linearGradient id="ring" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="{OCHRE}"/><stop offset="1" stop-color="{CLAY}"/></linearGradient>
     <clipPath id="globe"><circle cx="64" cy="64" r="40"/></clipPath>
     <clipPath id="front"><rect x="-10" y="64" width="148" height="80"/></clipPath>
   </defs>{style}
   {orbit(False)}
   <circle cx="64" cy="64" r="40" fill="url(#sphere)"/>
-  <g clip-path="url(#globe)" fill="none" stroke="#dcebdf" stroke-width="1.5" vector-effect="non-scaling-stroke" opacity=".5">
+  <g clip-path="url(#globe)" fill="none" stroke="#ffffff" stroke-width="1.5" vector-effect="non-scaling-stroke" opacity=".5">
     <ellipse cx="64" cy="64" rx="40" ry="9"/><ellipse cx="64" cy="44" rx="34.6" ry="7"/><ellipse cx="64" cy="84" rx="34.6" ry="7"/>
     <g vector-effect="non-scaling-stroke">{mer}</g>
   </g>
-  <g stroke="{OCHRE}" stroke-width="1.6" fill="none" stroke-linecap="round"><path class="link" d="M47 52 L66 44 L80 62 L58 74 Z"/></g>
-  <g fill="#f0c08a"><circle class="node" cx="47" cy="52" r="3.2"/><circle class="node n2" cx="66" cy="44" r="3.2"/><circle class="node n3" cx="80" cy="62" r="3.2"/><circle class="node n2" cx="58" cy="74" r="3.2"/></g>
+  <g stroke="#e3f3fc" stroke-width="1.6" fill="none" stroke-linecap="round"><path class="link" d="M47 52 L66 44 L80 62 L58 74 Z"/></g>
+  <g fill="#ffffff"><circle class="node" cx="47" cy="52" r="3.2"/><circle class="node n2" cx="66" cy="44" r="3.2"/><circle class="node n3" cx="80" cy="62" r="3.2"/><circle class="node n2" cx="58" cy="74" r="3.2"/></g>
   <ellipse cx="50" cy="45" rx="17" ry="11" fill="#fff" opacity=".13" transform="rotate(-30 50 45)"/>
   <circle cx="64" cy="64" r="40" fill="none" stroke="{PINE}" stroke-width="1.5" opacity=".55"/>
   {orbit(True)}

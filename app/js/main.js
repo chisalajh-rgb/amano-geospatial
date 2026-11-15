@@ -111,7 +111,7 @@ async function syncBasemap(zoom = false) {
   if (!S.src || !f) { basemap.clear(); basemapStamp = ''; return; }
   const placed = await basemap.setScan(S.src, f);
   if (!placed) { basemap.clear(); basemapStamp = ''; return; }
-  basemap.setFeatures(S.features.length ? JSON.parse(geojsonText()) : null, (code) => { const u = unitFor(code); return u ? css(u.rgb) : '#b4612f'; });
+  basemap.setFeatures(S.features.length ? JSON.parse(geojsonText()) : null, (code) => { const u = unitFor(code); return u ? css(u.rgb) : '#4a94c4'; });
   const stamp = S.src.name + '|' + S.crs.code;
   if (zoom || stamp !== basemapStamp) basemap.fit();
   basemapStamp = stamp;
@@ -439,7 +439,7 @@ function renderFeatures() {
   head.style.fontWeight = '600'; el.append(head);
   for (const [code, c] of per) {
     const d = document.createElement('div'); d.className = 'u';
-    const i = document.createElement('i'); const u = unitFor(code); i.style.background = u ? css(u.rgb) : '#b4612f';
+    const i = document.createElement('i'); const u = unitFor(code); i.style.background = u ? css(u.rgb) : '#4a94c4';
     d.append(i, document.createTextNode(`${code}${u?.name ? ' · ' + u.name : ''}: ${c}`)); el.append(d);
   }
 }
@@ -595,37 +595,37 @@ viewer.onDraw = (ctx, v) => {
   if ($('show-feats').checked) {
     for (const f of S.features) {
       const u = unitFor(f.props.code);
-      const rgb = u ? u.rgb : [180, 97, 47];
+      const rgb = u ? u.rgb : [74, 148, 196];
       if (f.type === 'polygon') {
         ctx.beginPath();
         for (const ring of f.coords) { ring.forEach((p, i) => { const [sx, sy] = P(p[0], p[1]); if (i) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); }); ctx.closePath(); }
         ctx.fillStyle = css(rgb, 0.38); ctx.fill('evenodd');
-        ctx.lineWidth = 1.6; ctx.strokeStyle = 'rgba(36,56,47,.95)'; ctx.stroke();
+        ctx.lineWidth = 1.6; ctx.strokeStyle = 'rgba(36,80,107,.95)'; ctx.stroke();
       } else if (f.type === 'line') {
         ctx.beginPath(); f.coords.forEach((p, i) => { const [sx, sy] = P(p[0], p[1]); if (i) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); });
         ctx.lineWidth = 3; ctx.strokeStyle = '#a8402f'; ctx.stroke();
       } else {
         const [sx, sy] = P(f.coords[0], f.coords[1]);
         ctx.beginPath(); ctx.arc(sx, sy, 5.5, 0, 7); ctx.fillStyle = '#a8402f'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
-        if (f.props.code) { ctx.font = '600 12px Segoe UI, Inter, sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.strokeText(f.props.code, sx + 9, sy + 4); ctx.fillStyle = '#1d241f'; ctx.fillText(f.props.code, sx + 9, sy + 4); }
+        if (f.props.code) { ctx.font = '600 12px Segoe UI, Inter, sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.strokeText(f.props.code, sx + 9, sy + 4); ctx.fillStyle = '#1c2f3b'; ctx.fillText(f.props.code, sx + 9, sy + 4); }
       }
     }
-    for (const u of S.units) if (u.swatch) { const [x0, y0] = P(u.swatch.x0, u.swatch.y0), [x1, y1] = P(u.swatch.x1, u.swatch.y1); ctx.setLineDash([4, 3]); ctx.lineWidth = 1.5; ctx.strokeStyle = '#24382f'; ctx.strokeRect(x0, y0, x1 - x0, y1 - y0); ctx.setLineDash([]); }
+    for (const u of S.units) if (u.swatch) { const [x0, y0] = P(u.swatch.x0, u.swatch.y0), [x1, y1] = P(u.swatch.x1, u.swatch.y1); ctx.setLineDash([4, 3]); ctx.lineWidth = 1.5; ctx.strokeStyle = '#24506b'; ctx.strokeRect(x0, y0, x1 - x0, y1 - y0); ctx.setLineDash([]); }
   }
   // grid lines
   if ($('show-grid').checked && S.grid) {
     const fr = S.frame || { x0: 0, y0: 0, x1: W, y1: H };
     ctx.lineWidth = 1.5; ctx.font = '600 11px Segoe UI, Inter, sans-serif';
-    const lab = (txt, sx, sy) => { const w = ctx.measureText(txt).width + 8; ctx.fillStyle = 'rgba(36,56,47,.9)'; ctx.fillRect(sx - w / 2, sy - 8, w, 16); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, sx, sy); ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic'; };
+    const lab = (txt, sx, sy) => { const w = ctx.measureText(txt).width + 8; ctx.fillStyle = 'rgba(36,80,107,.9)'; ctx.fillRect(sx - w / 2, sy - 8, w, 16); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, sx, sy); ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic'; };
     for (const l of S.grid.vertical) {
       const a = P(l.a + l.b * fr.y0, fr.y0), b = P(l.a + l.b * fr.y1, fr.y1);
-      ctx.strokeStyle = l.value !== undefined ? 'rgba(180,97,47,.95)' : 'rgba(63,107,85,.8)';
+      ctx.strokeStyle = l.value !== undefined ? 'rgba(74,148,196,.95)' : 'rgba(36,80,107,.8)';
       ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
       if (l.value !== undefined && v.scale * S.grid.spacingV > 46) lab(String(l.value), a[0], a[1] - 11);
     }
     for (const l of S.grid.horizontal) {
       const a = P(fr.x0, l.a + l.b * fr.x0), b = P(fr.x1, l.a + l.b * fr.x1);
-      ctx.strokeStyle = l.value !== undefined ? 'rgba(180,97,47,.95)' : 'rgba(63,107,85,.8)';
+      ctx.strokeStyle = l.value !== undefined ? 'rgba(74,148,196,.95)' : 'rgba(36,80,107,.8)';
       ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
       if (l.value !== undefined && v.scale * S.grid.spacingH > 24) lab(String(l.value), a[0] - 34, a[1]);
     }
@@ -635,11 +635,11 @@ viewer.onDraw = (ctx, v) => {
     for (const g of S.gcps) {
       const [sx, sy] = P(g.px, g.py);
       if (sx < -20 || sy < -20 || sx > v.cw + 20 || sy > v.ch + 20) continue;
-      const col = g.enabled === false ? '#8c8f86' : g.rejected ? '#a8402f' : !isFinite(g.mx) || !isFinite(g.my) ? '#a8741a' : '#3d7a4f';
+      const col = g.enabled === false ? '#8a9aa5' : g.rejected ? '#a8402f' : !isFinite(g.mx) || !isFinite(g.my) ? '#a8741a' : '#3d7a4f';
       ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.fillStyle = col;
       ctx.beginPath(); ctx.arc(sx, sy, g.id === S.hover ? 8 : 5.5, 0, 7); ctx.fill(); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(sx - 10, sy); ctx.lineTo(sx + 10, sy); ctx.moveTo(sx, sy - 10); ctx.lineTo(sx, sy + 10); ctx.lineWidth = 1; ctx.strokeStyle = col; ctx.stroke();
-      if (v.scale > 0.35 || S.gcps.length < 20) { ctx.font = '600 11px Segoe UI, Inter, sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.strokeText(g.id, sx + 8, sy - 8); ctx.fillStyle = '#1d241f'; ctx.fillText(g.id, sx + 8, sy - 8); }
+      if (v.scale > 0.35 || S.gcps.length < 20) { ctx.font = '600 11px Segoe UI, Inter, sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.strokeText(g.id, sx + 8, sy - 8); ctx.fillStyle = '#1c2f3b'; ctx.fillText(g.id, sx + 8, sy - 8); }
     }
   }
   // drawing in progress
@@ -647,8 +647,8 @@ viewer.onDraw = (ctx, v) => {
     ctx.beginPath();
     S.draft.pts.forEach((p, i) => { const [sx, sy] = P(p[0], p[1]); if (i) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); });
     if (S.cursor) { const [sx, sy] = P(S.cursor[0], S.cursor[1]); ctx.lineTo(sx, sy); }
-    ctx.lineWidth = 2; ctx.strokeStyle = '#b4612f'; ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]);
-    for (const p of S.draft.pts) { const [sx, sy] = P(p[0], p[1]); ctx.fillStyle = '#fff'; ctx.strokeStyle = '#b4612f'; ctx.beginPath(); ctx.arc(sx, sy, 4, 0, 7); ctx.fill(); ctx.stroke(); }
+    ctx.lineWidth = 2; ctx.strokeStyle = '#4a94c4'; ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]);
+    for (const p of S.draft.pts) { const [sx, sy] = P(p[0], p[1]); ctx.fillStyle = '#fff'; ctx.strokeStyle = '#4a94c4'; ctx.beginPath(); ctx.arc(sx, sy, 4, 0, 7); ctx.fill(); ctx.stroke(); }
   }
 };
 
