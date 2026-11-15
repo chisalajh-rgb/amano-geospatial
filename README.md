@@ -39,7 +39,7 @@ browser) or the optional server in `proxy/`. Never commit an API key.
 | Path | What it is |
 | --- | --- |
 | `app/js/` | The engine: `grid.js` (line detection), `georef.js` (fitting), `ai.js`, `digitize.js`, `tiff.js`, `vector.js` … |
-| `app/vendor/` | Third-party libraries (proj4js, Leaflet, UTIF.js, pako) with their licences |
+| `app/vendor/` | Third-party libraries (proj4js, Leaflet, geotiff.js, UTIF.js, pako) with their licences |
 | `app/sample/` | A synthetic sample map (invented geology) |
 | `proxy/` | Optional AI server (Cloudflare Worker) |
 | `tools/` | Scripts that generate the sample map and the coordinate-system list |

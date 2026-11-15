@@ -19,6 +19,55 @@ function downscaleRGBA(rgba, w, h, f) {
   return { rgba: out, width: ow, height: oh };
 }
 
+
+/** Read a TIFF with geotiff.js, shrinking while reading if it is larger than MAX_PIXELS. */
+async function decodeWithGeoTIFF(buf) {
+  const G = globalThis.GeoTIFF;
+  if (!G) return null;
+  const tiff = await G.fromArrayBuffer(buf);
+  const n = await tiff.getImageCount();
+  let image = null;
+  for (let i = 0; i < n; i++) { const im = await tiff.getImage(i); if (!image || im.getWidth() * im.getHeight() > image.getWidth() * image.getHeight()) image = im; }
+  const W = image.getWidth(), H = image.getHeight();
+  const k = W * H > MAX_PIXELS ? Math.sqrt(MAX_PIXELS / (W * H)) : 1;
+  const width = Math.max(1, Math.round(W * k)), height = Math.max(1, Math.round(H * k));
+  const opts = { interleave: true };
+  if (k < 1) { opts.width = width; opts.height = height; opts.resampleMethod = 'bilinear'; }
+  // readRGB handles palettes, greys, YCbCr and CMYK; deep (16-bit) colour is read as plain bands and scaled below
+  const bits = Number(image.getBitsPerSample()) || 8, spp = image.getSamplesPerPixel();
+  const rgb = bits > 8 && spp >= 3 ? await image.readRasters({ ...opts, samples: [0, 1, 2] }) : await image.readRGB(opts);
+  if (rgb.length < width * height * 3) throw new Error('unexpected sample count');
+  // bring 16-bit and floating-point samples down to 8 bits
+  let div = 1;
+  if (!(rgb instanceof Uint8Array) && !(rgb instanceof Uint8ClampedArray)) {
+    let max = 0; const step = Math.max(1, Math.floor(rgb.length / 200000));
+    for (let i = 0; i < rgb.length; i += step) if (rgb[i] > max) max = rgb[i];
+    div = max > 255 ? (max > 4095 ? 257 : max / 255) : max <= 1 ? 1 / 255 : 1;
+  }
+  const rgba = new Uint8ClampedArray(width * height * 4);
+  for (let i = 0, j = 0; j < rgba.length; i += 3, j += 4) { rgba[j] = rgb[i] / div; rgba[j + 1] = rgb[i + 1] / div; rgba[j + 2] = rgb[i + 2] / div; rgba[j + 3] = 255; }
+  return { width, height, rgba, originalWidth: W, originalHeight: H };
+}
+
+function decodeWithUTIF(buf) {
+  const UTIF = globalThis.UTIF;
+  if (!UTIF) throw new Error('The TIFF reader did not load. Reload the page and try again.');
+  let ifds;
+  try { ifds = UTIF.decode(buf); } catch { throw new Error('This TIFF file could not be read.'); }
+  const pages = ifds.filter((d) => d.t256 && d.t257);
+  if (!pages.length) throw new Error('This TIFF file contains no image.');
+  const ifd = pages.reduce((a, b) => (b.t256[0] * b.t257[0] > a.t256[0] * a.t257[0] ? b : a));
+  try { UTIF.decodeImage(buf, ifd); } catch { throw new Error('This TIFF uses a format the reader does not support. Save it as PNG or as an uncompressed TIFF and try again.'); }
+  if (!ifd.data || !ifd.data.length) throw new Error('This TIFF uses a compression the reader does not support. Save it as PNG or as an uncompressed TIFF and try again.');
+  const raw = UTIF.toRGBA8(ifd);
+  let width = ifd.width, height = ifd.height;
+  const originalWidth = width, originalHeight = height;
+  let rgba = new Uint8ClampedArray(raw.buffer, raw.byteOffset, raw.length);
+  for (let i = 3; i < rgba.length; i += 4) rgba[i] = 255;
+  if (width * height > MAX_PIXELS) ({ rgba, width, height } = downscaleRGBA(rgba, width, height, Math.ceil(Math.sqrt((width * height) / MAX_PIXELS))));
+  return { width, height, rgba, originalWidth, originalHeight };
+}
+
 /**
  * Load a scan. Returns {name, type, width, height, rgba, canvas, originalWidth, originalHeight, scale}
  * where scale = working size / original size (1 unless the scan was reduced).
@@ -31,23 +80,12 @@ export async function loadImageFile(file) {
   }
   let width, height, rgba, originalWidth, originalHeight;
   if (ext === 'tif' || ext === 'tiff' || file.type === 'image/tiff') {
-    if (!globalThis.UTIF) throw new Error('The TIFF reader did not load. Reload the page and try again.');
     const buf = await file.arrayBuffer();
-    let ifds;
-    try { ifds = UTIF.decode(buf); } catch { throw new Error('This TIFF file could not be read.'); }
-    const pages = ifds.filter((d) => d.t256 && d.t257);
-    if (!pages.length) throw new Error('This TIFF file contains no image.');
-    const ifd = pages.reduce((a, b) => (b.t256[0] * b.t257[0] > a.t256[0] * a.t257[0] ? b : a));
-    UTIF.decodeImage(buf, ifd);
-    if (!ifd.data || !ifd.data.length) throw new Error('This TIFF uses a compression the reader does not support. Save it with LZW or no compression and try again.');
-    const raw = UTIF.toRGBA8(ifd);
-    width = originalWidth = ifd.width; height = originalHeight = ifd.height;
-    rgba = new Uint8ClampedArray(raw.buffer, raw.byteOffset, raw.length);
-    for (let i = 3; i < rgba.length; i += 4) rgba[i] = 255;
-    if (width * height > MAX_PIXELS) {
-      const f = Math.ceil(Math.sqrt((width * height) / MAX_PIXELS));
-      ({ rgba, width, height } = downscaleRGBA(rgba, width, height, f));
-    }
+    let dec = null;
+    // Two readers: geotiff.js copes with tiles, predictors, 16-bit and separate planes; UTIF covers fax-compressed scans.
+    try { dec = await decodeWithGeoTIFF(buf); } catch (e) { console.warn('geotiff.js could not read this TIFF, trying UTIF:', e); }
+    if (!dec) dec = decodeWithUTIF(buf);
+    ({ width, height, rgba, originalWidth, originalHeight } = dec);
   } else {
     let bmp;
     try { bmp = await createImageBitmap(file); } catch { throw new Error('This file could not be opened as an image. Use PNG, JPEG, WebP or TIFF.'); }
