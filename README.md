@@ -28,6 +28,8 @@ The Amano Georeferencer (beta) runs entirely in the browser at `/app/`:
   (or you type the first line's value and the spacing), fits the map and reports the error.
 - **Digitize:** reads the legend with AI or takes colours you pick, and traces the units as polygons;
   magic wand, polygon, line and point tools for the rest.
+- **Batch:** choose many scans; each is georeferenced with AI in turn and saved as a GeoTIFF with its
+  control points and audit log, plus a summary CSV that flags the maps a person should check.
 - **Basemap:** an OpenStreetMap view shows the georeferenced scan and features over real ground, to check
   the map landed in the right place. Tiles come from openstreetmap.org, which is free for light use only;
   heavy traffic needs a paid tile provider.

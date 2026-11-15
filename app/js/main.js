@@ -135,8 +135,8 @@ function setView(view) {
 
 // ------------------------------------------------------------------ loading
 
-async function loadFile(file) {
-  await busy('Opening the map…', async () => {
+async function loadFileCore(file) {
+  {
     const src = await loadImageFile(file);
     Object.assign(S, { src, gray: toGray(src.rgba, src.width, src.height), grid: null, frame: null, ai: null, legendBox: null,
       crs: null, gcps: [], nextId: 1, model: null, units: [], work: null, features: [], nextFid: 1, draft: null, aiLabels: null });
@@ -150,8 +150,9 @@ async function loadFile(file) {
     $('file-info').textContent = `${src.name} · ${src.width} × ${src.height} px.${reduced}`;
     log(`Loaded ${src.name} (${src.width} × ${src.height} px).${reduced}`);
     setTool('pan'); renderGcps(); renderUnits(); renderFeatures(); refreshEnabled();
-  });
+  }
 }
+async function loadFile(file) { await busy('Opening the map…', () => loadFileCore(file)); }
 
 async function loadSample() {
   const res = await fetch('sample/sample-map.jpg');
@@ -289,10 +290,12 @@ function gcpsFromLabels(xs, ys) {
   return out.slice(0, 150);
 }
 
-async function autoGeoref() {
-  if (!AI.aiReady()) { openSettings(); toast('Connect the AI first: add your API key or the Amano server address.'); return; }
-  await busy('Looking for grid lines…', async () => {
+/** The automatic pipeline for the loaded map. Throws with a readable message if it cannot finish. */
+async function autoGeorefCore({ quiet = false } = {}) {
+
+  {
     const { width: W, height: H } = S.src;
+    S.aiCrsConfidence = null;
     const haveLines = S.grid ? S.grid.vertical.length >= 2 && S.grid.horizontal.length >= 2 : runDetect();
 
     progress('Reading the sheet with AI…', 0.15);
@@ -352,6 +355,7 @@ async function autoGeoref() {
       S.crs = chosen.crs;
       $('crs').value = `${chosen.crs.code} — ${chosen.crs.name}`;
       const pct = Math.round(chosen.c.confidence * 100);
+      S.aiCrsConfidence = chosen.c.confidence;
       $('crs-note').textContent = `Suggested by AI (${pct}% confident): ${chosen.c.why}`;
       $('crs-note').className = 'hint' + (chosen.c.confidence < 0.6 ? ' warn' : '');
       log(`Coordinate system set to ${crsLabel(chosen.crs)} (${pct}% confident). ${chosen.c.why}`, chosen.c.confidence < 0.6 ? 'warn' : '');
@@ -365,10 +369,14 @@ async function autoGeoref() {
     if (m) {
       log(`Fitted: typical error ${fmt(m.rmsPx, 2)} px (${fmt(m.rms, S.crs?.kind === 'geographic' ? 6 : 2)} ${mapUnit()}), pixel size ${fmt(m.resolution, 3)} ${mapUnit()}.`, m.rmsPx <= 1.5 ? 'good' : 'warn');
       const w = crsCheck(); if (w) log(w, 'bad');
-      toast(m.rmsPx <= 1.5 ? 'Georeferenced. Check the points, then export.' : 'Georeferenced, but the fit is loose. Check the control points.', m.rmsPx <= 1.5 ? 'good' : '');
+      if (!quiet) toast(m.rmsPx <= 1.5 ? 'Georeferenced. Check the points, then export.' : 'Georeferenced, but the fit is loose. Check the control points.', m.rmsPx <= 1.5 ? 'good' : '');
     }
     log(`AI usage so far: ${AI.usage.calls} requests, ${AI.usage.inputTokens.toLocaleString('en-US')} input and ${AI.usage.outputTokens.toLocaleString('en-US')} output tokens.`);
-  });
+  }
+}
+async function autoGeoref() {
+  if (!AI.aiReady()) { openSettings(); toast('Connect the AI first: add your API key or the Amano server address.'); return; }
+  await busy('Looking for grid lines…', () => autoGeorefCore());
 }
 
 function applyAssist() {
@@ -737,6 +745,146 @@ const exporters = {
   }),
 };
 
+
+// ------------------------------------------------------------------ batch mode
+
+const B = { files: [], rows: [], running: false, stop: false, dir: null };
+const csvCell = (v) => { const t = String(v ?? ''); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
+
+function batchRender() {
+  const body = $('batch-body'); body.textContent = '';
+  B.rows.forEach((r, i) => {
+    const tr = document.createElement('tr'); tr.className = r.status;
+    const cells = [i + 1, r.file, { queued: 'Waiting', working: r.stage || 'Working…', ok: 'Good', check: 'Check', failed: 'Failed', stopped: 'Not run' }[r.status],
+      r.crs || '', r.points ?? '', r.rmsPx != null ? fmt(r.rmsPx, 2) : '', r.note || ''];
+    cells.forEach((c, k) => { const td = document.createElement('td'); td.textContent = c; if (k === 2) td.className = 'st'; if (k === 6) td.title = c; tr.append(td); });
+    body.append(tr);
+  });
+  const done = B.rows.filter((r) => ['ok', 'check', 'failed'].includes(r.status)).length;
+  const n = (st) => B.rows.filter((r) => r.status === st).length;
+  $('batch-progress').textContent = !B.rows.length ? 'No maps chosen yet.'
+    : B.running ? `Working: ${done} of ${B.rows.length} done.`
+    : done ? `Finished: ${n('ok')} good, ${n('check')} to check, ${n('failed')} failed${n('stopped') ? `, ${n('stopped')} not run` : ''}.`
+    : `${B.rows.length} map${B.rows.length === 1 ? '' : 's'} ready.`;
+  $('batch-bar').style.width = B.rows.length ? Math.round((100 * done) / B.rows.length) + '%' : '0%';
+  $('batch-start').disabled = B.running || !B.rows.some((r) => r.status === 'queued');
+  $('batch-stop').hidden = !B.running;
+  $('batch-files').disabled = $('batch-folder').disabled = $('batch-crs').disabled = B.running;
+  $('batch-summary').disabled = B.running || !done;
+}
+
+function batchSummaryCSV() {
+  const cols = ['file', 'status', 'note', 'crs_epsg', 'crs_name', 'crs_confidence', 'points_used', 'points_set_aside', 'rms_px', 'rms_map_units', 'pixel_size', 'rotation_deg', 'title', 'scale', 'output'];
+  return [cols.join(','), ...B.rows.map((r) => cols.map((c) => csvCell(r.csv?.[c] ?? (c === 'file' ? r.file : c === 'status' ? r.status : c === 'note' ? r.note : ''))).join(','))].join('\n') + '\n';
+}
+
+async function batchSave(name, data, mime) {
+  if (B.dir) {
+    const fh = await B.dir.getFileHandle(name, { create: true });
+    const w = await fh.createWritable();
+    await w.write(data instanceof Uint8Array || typeof data === 'string' ? data : new Uint8Array(data));
+    await w.close();
+  } else download(name, data, mime);
+}
+
+/** Judge one finished map: 'ok' only when nothing looks doubtful. */
+function batchVerdict() {
+  const m = S.model, notes = [];
+  if (!m) return { status: 'failed', note: 'Too few control points to fit the map.' };
+  if (S.gcps.some((g) => g.source === 'ai-approx')) notes.push('grid lines not found: points are approximate');
+  if (m.rmsPx > 4) notes.push(`poor fit (${fmt(m.rmsPx, 1)} px)`); else if (m.rmsPx > 1.5) notes.push(`loose fit (${fmt(m.rmsPx, 1)} px)`);
+  if (m.n < 6) notes.push(`only ${m.n} control points`);
+  if (!S.crs) notes.push('coordinate system not determined');
+  else if (!B.fixedCrs && (S.aiCrsConfidence ?? 0) < 0.6) notes.push(`coordinate system is a guess (${Math.round((S.aiCrsConfidence ?? 0) * 100)}%)`);
+  const w = crsCheck(); if (w) notes.push('position does not suit the coordinate system');
+  return { status: notes.length ? 'check' : 'ok', note: notes.join('; ') };
+}
+
+async function batchRun() {
+  if (B.running) return;
+  if (!AI.aiReady()) { $('batch').close(); openSettings(); toast('Batch mode uses the AI. Add your API key or the Amano server address first.'); return; }
+  const crsText = $('batch-crs').value.trim(), cm = crsText.match(/^(?:epsg:)?\s*(\d{4,6})/i);
+  B.fixedCrs = null;
+  if (crsText) {
+    B.fixedCrs = cm ? await resolveCRS(Number(cm[1])) : null;
+    if (!B.fixedCrs) { toast('That coordinate system was not recognised. Pick one from the list or leave the box empty.', 'bad'); return; }
+  }
+  B.dir = null;
+  if ($('batch-folder').checked && window.showDirectoryPicker) {
+    try { B.dir = await window.showDirectoryPicker({ mode: 'readwrite' }); } catch { return; } // cancelled
+  }
+  B.running = true; B.stop = false;
+  log(`Batch started: ${B.rows.filter((r) => r.status === 'queued').length} maps${B.fixedCrs ? `, all in ${crsLabel(B.fixedCrs)}` : ''}.`);
+  for (let i = 0; i < B.rows.length; i++) {
+    const row = B.rows[i];
+    if (row.status !== 'queued') continue;
+    if (B.stop) { row.status = 'stopped'; continue; }
+    const stage = (t) => { row.status = 'working'; row.stage = t; batchRender(); };
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        stage('Opening…');
+        await new Promise((r) => setTimeout(r, 30));
+        await loadFileCore(B.files[i]);
+        stage('Reading with AI…');
+        await autoGeorefCore({ quiet: true });
+        if (B.fixedCrs) { S.crs = B.fixedCrs; $('crs').value = `${S.crs.code} — ${S.crs.name}`; refit(); }
+        const v = batchVerdict();
+        const m = S.model;
+        let output = '';
+        if (m) {
+          stage('Writing GeoTIFF…');
+          const base = baseName();
+          const tif = await buildGeoTIFF();
+          if (B.dir) {
+            await batchSave(`${base}_georef.tif`, tif, 'image/tiff');
+            await batchSave(`${base}.points`, pointsFileText(), 'text/plain');
+            await batchSave(`${base}_audit.json`, JSON.stringify(auditObject(), null, 2), 'application/json');
+            output = `${base}_georef.tif`;
+          } else {
+            await batchSave(`${base}_amano.zip`, makeZip([{ name: `${base}_georef.tif`, data: tif }, { name: `${base}.points`, data: pointsFileText() }, { name: `${base}_audit.json`, data: JSON.stringify(auditObject(), null, 2) }]), 'application/zip');
+            output = `${base}_amano.zip`;
+          }
+        }
+        Object.assign(row, { status: v.status, note: v.note, crs: S.crs ? `EPSG:${S.crs.code}` : '', points: m ? m.n : 0, rmsPx: m ? m.rmsPx : null });
+        row.csv = { file: row.file, status: v.status, note: v.note, crs_epsg: S.crs?.code ?? '', crs_name: S.crs?.name ?? '', crs_confidence: B.fixedCrs ? 'set by user' : S.aiCrsConfidence ?? '',
+          points_used: m ? m.n : 0, points_set_aside: S.gcps.filter((g) => g.rejected).length, rms_px: m ? m.rmsPx.toFixed(3) : '', rms_map_units: m ? m.rms : '', pixel_size: m ? m.resolution : '',
+          rotation_deg: m ? m.rotationDeg.toFixed(3) : '', title: S.ai?.title ?? '', scale: S.ai?.scaleDenominator ?? '', output };
+        break;
+      } catch (e) {
+        const msg = e?.message || String(e);
+        if (attempt === 0 && /rate-limit|overloaded|529|Could not reach/i.test(msg) && !B.stop) { stage('Waiting to retry…'); await new Promise((r) => setTimeout(r, B.retryMs ?? 30000)); continue; }
+        Object.assign(row, { status: 'failed', note: msg }); log(`Batch: ${row.file} failed. ${msg}`, 'bad');
+        break;
+      }
+    }
+    batchRender();
+  }
+  B.running = false;
+  const done = B.rows.filter((r) => ['ok', 'check', 'failed'].includes(r.status));
+  if (done.length) { try { await batchSave('amano_batch_summary.csv', batchSummaryCSV(), 'text/csv'); } catch { /* the button still offers it */ } }
+  const n = (st) => B.rows.filter((r) => r.status === st).length;
+  log(`Batch finished: ${n('ok')} good, ${n('check')} to check, ${n('failed')} failed.`, n('failed') ? 'warn' : 'good');
+  batchRender();
+}
+
+function openBatch() {
+  $('batch-folder-row').hidden = !window.showDirectoryPicker;
+  batchRender();
+  $('batch').showModal();
+}
+
+$('btn-batch').addEventListener('click', openBatch);
+$('batch-files').addEventListener('change', (e) => {
+  B.files = [...e.target.files].filter((f) => /\.(png|jpe?g|webp|tiff?|bmp|gif)$/i.test(f.name)).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  B.rows = B.files.map((f) => ({ file: f.name, status: 'queued' }));
+  batchRender();
+});
+$('batch-start').addEventListener('click', batchRun);
+$('batch-stop').addEventListener('click', () => { B.stop = true; $('batch-progress').textContent = 'Stopping after the current map…'; });
+$('batch-summary').addEventListener('click', () => download('amano_batch_summary.csv', batchSummaryCSV(), 'text/csv'));
+$('batch-close').addEventListener('click', () => { if (!B.running) $('batch').close(); else toast('Stop the batch first.'); });
+$('batch').addEventListener('cancel', (e) => { if (B.running) e.preventDefault(); });
+
 // ------------------------------------------------------------------ settings
 
 function openSettings() {
@@ -807,6 +955,7 @@ window.addEventListener('keydown', (e) => {
 // coordinate-system list
 {
   const dl = $('crs-list');
+  $('batch-crs').setAttribute('list', 'crs-list');
   const first = [20935, 20934, 20936, 32735, 32734, 32736, 3988, 3989, 3991, 3987, 4209, 4326];
   const list = allCRS().slice().sort((a, b) => (first.indexOf(a.code) === -1 ? 99 : first.indexOf(a.code)) - (first.indexOf(b.code) === -1 ? 99 : first.indexOf(b.code)) || a.name.localeCompare(b.name));
   for (const c of list) { const o = document.createElement('option'); o.value = `${c.code} — ${c.name}`; dl.append(o); }
@@ -816,4 +965,4 @@ renderFeatures(); refreshEnabled();
 log('Ready. Load a scanned map to begin.');
 
 // Handle for tests and for debugging in the browser console.
-window.amano = { state: S, viewer, basemap, setView, AI, loadFile, autoGeoref, readLegendAI, extract, refit, setCRS, runDetect, exporters, version: VERSION };
+window.amano = { state: S, viewer, batch: B, batchRun, basemap, setView, AI, loadFile, autoGeoref, readLegendAI, extract, refit, setCRS, runDetect, exporters, version: VERSION };

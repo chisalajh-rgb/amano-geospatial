@@ -142,6 +142,22 @@ table.gcps .del:hover{color:var(--bad)}
 .toast{position:absolute;right:14px;top:14px;max-width:420px;background:#fff;border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:10px;padding:10px 14px;font-size:13px;box-shadow:0 16px 40px -24px rgba(13,42,84,.7);z-index:6}
 .toast.bad{border-left-color:var(--bad)} .toast.good{border-left-color:var(--good)}
 
+/* batch dialog */
+dialog.wide{max-width:900px}
+.batch-opts{display:grid;grid-template-columns:240px 1fr;gap:14px;align-items:start}
+.batch-opts .col{display:flex;flex-direction:column;gap:10px}
+.drop.small{padding:16px 10px}
+.batch-status{display:flex;flex-direction:column;gap:2px;font-weight:600;color:var(--cobalt);font-size:13.5px}
+.batch-status .bar{margin-top:6px}
+.batch-table{max-height:min(320px,38vh)}
+table.batch td{padding:5px 7px;white-space:normal;vertical-align:top}
+table.batch td:nth-child(2){max-width:220px;overflow-wrap:anywhere}
+table.batch td:nth-child(7){color:var(--slate);max-width:300px}
+table.batch tr.ok .st{color:var(--good);font-weight:700} table.batch tr.check .st{color:var(--warn);font-weight:700}
+table.batch tr.failed .st{color:var(--bad);font-weight:700} table.batch tr.working .st{color:var(--cobalt2);font-weight:700}
+table.batch tr.failed td:nth-child(7){color:var(--bad)}
+@media(max-width:700px){.batch-opts{grid-template-columns:1fr}}
+
 /* settings dialog */
 dialog{border:0;border-radius:16px;padding:0;max-width:480px;width:calc(100% - 32px);box-shadow:0 30px 80px -30px rgba(9,31,64,.7);margin:auto}
 dialog::backdrop{background:rgba(9,31,64,.45)}

@@ -214,4 +214,5 @@ async def main():
     print("E2E", "PASSED" if ok else "FAILED")
     sys.exit(0 if ok else 1)
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

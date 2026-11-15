@@ -36,6 +36,7 @@
           <span>or drop it here. PNG, JPEG, WebP or TIFF.</span>
         </label>
         <button class="btn line wide" id="btn-sample" type="button">Load the sample map</button>
+        <button class="btn line wide" id="btn-batch" type="button">Batch: georeference many maps</button>
         <p class="hint" id="file-info">Your map stays in this browser. Nothing is uploaded unless you run an AI step.</p>
       </div>
     </section>
@@ -177,6 +178,37 @@
     <div class="toast" id="toast" hidden></div>
   </main>
 </div>
+
+<dialog id="batch" class="wide">
+  <div class="dlg">
+    <h2>Batch georeferencing</h2>
+    <p>Choose many scans. Each one is georeferenced with AI in turn and saved as a GeoTIFF with its control points and audit log. A summary table lists every map's error and flags the ones a person should check.</p>
+    <div class="batch-opts">
+      <label class="drop small"><input type="file" id="batch-files" multiple accept=".png,.jpg,.jpeg,.webp,.tif,.tiff,.bmp,.gif,image/*"><b>Choose the maps</b><span>Select as many files as you like.</span></label>
+      <div class="col">
+        <label class="field">Coordinate system for every map (optional)
+          <input type="text" id="batch-crs" placeholder="Leave empty to let the AI read it from each sheet" autocomplete="off">
+        </label>
+        <label class="radio" id="batch-folder-row"><input type="checkbox" id="batch-folder" checked> <span>Save straight into a folder I choose<br><small>Otherwise each map downloads as its own zip file.</small></span></label>
+      </div>
+    </div>
+    <div class="batch-status"><span id="batch-progress">No maps chosen yet.</span><div class="bar"><i id="batch-bar"></i></div></div>
+    <div class="tablewrap batch-table">
+      <table class="gcps batch">
+        <thead><tr><th>#</th><th>Map</th><th>Result</th><th>CRS</th><th>Points</th><th>Err px</th><th>Note</th></tr></thead>
+        <tbody id="batch-body"></tbody>
+      </table>
+    </div>
+    <p class="hint">Keep this tab open while it runs. Parts of each map image are sent to the AI service. “Check” means open that map on its own and look at the control points before trusting it.</p>
+    <div class="dlg-actions">
+      <button class="btn line" id="batch-summary" type="button" disabled>Download summary (.csv)</button>
+      <span class="grow"></span>
+      <button class="btn quiet" id="batch-close" type="button">Close</button>
+      <button class="btn line" id="batch-stop" type="button" hidden>Stop</button>
+      <button class="btn primary" id="batch-start" type="button" disabled>Start</button>
+    </div>
+  </div>
+</dialog>
 
 <dialog id="settings">
   <form method="dialog" class="dlg">
