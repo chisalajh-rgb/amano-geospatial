@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#0d2a54">
 <link rel="icon" href="../assets/favicon.ico" sizes="48x48">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -148,22 +149,29 @@
   </aside>
 
   <main class="stage" id="stage">
-    <canvas id="view"></canvas>
+    <div id="basemap"></div>
+    <canvas id="view" hidden></canvas>
     <div class="toolbar" id="toolbar" hidden>
-      <button class="tb tool on" data-tool="pan" type="button" title="Pan and zoom">Pan</button>
-      <button class="tb" id="tb-fit" type="button" title="Show the whole map">Fit</button>
-      <button class="tb" id="tb-in" type="button" title="Zoom in">+</button>
-      <button class="tb" id="tb-out" type="button" title="Zoom out">−</button>
+      <span class="seg" role="group" aria-label="View">
+        <button class="tb on" id="view-scan" type="button" title="Work on the scan">Scan</button>
+        <button class="tb" id="view-base" type="button" title="See the map on OpenStreetMap">Basemap</button>
+      </span>
       <span class="sep"></span>
-      <label class="tb check"><input type="checkbox" id="show-grid" checked> Grid</label>
-      <label class="tb check"><input type="checkbox" id="show-gcps" checked> Points</label>
+      <button class="tb tool on scan-only" data-tool="pan" type="button" title="Pan and zoom">Pan</button>
+      <button class="tb" id="tb-fit" type="button" title="Show the whole map">Fit</button>
+      <button class="tb scan-only" id="tb-in" type="button" title="Zoom in">+</button>
+      <button class="tb scan-only" id="tb-out" type="button" title="Zoom out">−</button>
+      <span class="sep"></span>
+      <label class="tb check scan-only"><input type="checkbox" id="show-grid" checked> Grid</label>
+      <label class="tb check scan-only"><input type="checkbox" id="show-gcps" checked> Points</label>
+      <label class="tb check base-only" hidden>Scan opacity <input type="range" id="base-opacity" min="0" max="100" value="75"></label>
       <label class="tb check"><input type="checkbox" id="show-feats" checked> Features</label>
     </div>
     <div class="status" id="status" hidden></div>
     <div class="empty" id="empty">
       <img src="../assets/logo-icon.svg" alt="" width="72" height="72">
       <h1>Georeference and digitize a scanned map</h1>
-      <p>Load a scan on the left, or try the sample map. The result is a GeoTIFF and vector layers you can open in QGIS, ArcGIS or Leapfrog.</p>
+      <p>Load a scan on the left, or try the sample map. Once it is georeferenced it appears here on the basemap, and exports as a GeoTIFF and vector layers for QGIS, ArcGIS or Leapfrog.</p>
     </div>
     <div class="busy" id="busy" hidden><div class="card"><div class="spin"></div><p id="busy-text">Working…</p><div class="bar"><i id="busy-bar"></i></div></div></div>
     <div class="toast" id="toast" hidden></div>
@@ -199,6 +207,7 @@
 
 <script src="config.js"></script>
 <script src="vendor/proj4.js"></script>
+<script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/pako_inflate.min.js"></script>
 <script src="vendor/UTIF.js"></script>
 <script type="module" src="js/main.js"></script>

@@ -10,6 +10,7 @@ import { writeGeoTIFF } from './tiff.js';
 import { buildWorkImage, sampleColor, rgbToLab, extractUnits, wandSelect, latticeToPixel } from './digitize.js';
 import { toGeoJSON, writeShapefile, polygonArea, pointsToCSV } from './vector.js';
 import { makeZip } from './zip.js';
+import { Basemap } from './basemap.js';
 
 const VERSION = '0.1.0-beta';
 const $ = (id) => document.getElementById(id);
@@ -22,6 +23,8 @@ const S = {
 };
 
 const viewer = new Viewer($('view'));
+const basemap = new Basemap($('basemap'));
+S.view = 'base'; // 'scan' = work on the scan, 'base' = OpenStreetMap with the scan laid over it
 
 // ------------------------------------------------------------------ small UI helpers
 
@@ -74,6 +77,7 @@ function refreshEnabled() {
 }
 
 function setTool(tool) {
+  if (tool !== 'pan' && S.view === 'base' && S.src) setView('scan');
   if (S.draft && tool !== S.tool) S.draft = null;
   S.tool = tool;
   document.querySelectorAll('.tool').forEach((b) => b.classList.toggle('on', b.dataset.tool === tool));
@@ -89,6 +93,46 @@ function setTool(tool) {
   viewer.requestDraw();
 }
 
+// ------------------------------------------------------------------ basemap view
+
+/** pixel -> [lon, lat], or null if the map cannot be placed on the basemap yet. */
+function pixelToLonLat() {
+  if (!S.model || !S.crs) return null;
+  const tw = toWGS84(S.crs);
+  if (!tw) return null;
+  return (x, y) => { try { return tw(S.model.forward(x, y)); } catch { return null; } };
+}
+
+let basemapStamp = '';
+async function syncBasemap(zoom = false) {
+  if (!basemap.ok) return;
+  const f = pixelToLonLat();
+  if (!S.src || !f) { basemap.clear(); basemapStamp = ''; return; }
+  const placed = await basemap.setScan(S.src, f);
+  if (!placed) { basemap.clear(); basemapStamp = ''; return; }
+  basemap.setFeatures(S.features.length ? JSON.parse(geojsonText()) : null, (code) => { const u = unitFor(code); return u ? css(u.rgb) : '#e8933b'; });
+  const stamp = S.src.name + '|' + S.crs.code;
+  if (zoom || stamp !== basemapStamp) basemap.fit();
+  basemapStamp = stamp;
+}
+
+function setView(view) {
+  if (view === 'base' && !basemap.ok) { toast('The basemap could not be loaded. Check your internet connection and reload.', 'bad'); return; }
+  S.view = S.src ? view : 'base';
+  const base = S.view === 'base';
+  $('view').hidden = base;
+  $('view-scan').classList.toggle('on', !base); $('view-base').classList.toggle('on', base);
+  document.querySelectorAll('.scan-only').forEach((e) => { e.hidden = base; });
+  document.querySelectorAll('.base-only').forEach((e) => { e.hidden = !base; });
+  $('status').hidden = base || !S.src;
+  if (base) {
+    if (S.tool !== 'pan') setTool('pan');
+    basemap.resize();
+    if (S.src && !pixelToLonLat()) toast(!S.model ? 'Georeference the map and it will appear here on the basemap.' : 'Choose the map\'s coordinate system to place it on the basemap.');
+    syncBasemap(true);
+  } else { viewer.resize(); }
+}
+
 // ------------------------------------------------------------------ loading
 
 async function loadFile(file) {
@@ -98,8 +142,10 @@ async function loadFile(file) {
       crs: null, gcps: [], nextId: 1, model: null, units: [], work: null, features: [], nextFid: 1, draft: null, aiLabels: null });
     $('crs').value = ''; $('crs-note').textContent = 'Leave empty for a local mine grid.'; $('crs-note').className = 'hint';
     $('assist-form').hidden = true;
+    basemap.clear(); basemapStamp = '';
+    setView('scan');
     viewer.setImage(src.canvas, src.width, src.height);
-    $('empty').hidden = true; $('toolbar').hidden = false; $('status').hidden = false;
+    $('empty').hidden = true; $('toolbar').hidden = false; $('status').hidden = false; viewer.resize(); viewer.fit();
     const reduced = src.scale < 0.999 ? ` Reduced from ${src.originalWidth} × ${src.originalHeight} to fit in memory.` : '';
     $('file-info').textContent = `${src.name} · ${src.width} × ${src.height} px.${reduced}`;
     log(`Loaded ${src.name} (${src.width} × ${src.height} px).${reduced}`);
@@ -152,6 +198,7 @@ function refit() {
   S.model = usable.length >= MIN_POINTS[type] ? fitRobust(S.gcps, type) : null;
   if (!S.model) for (const g of S.gcps) g.rejected = false;
   renderGcps(); renderFit(); refreshEnabled(); viewer.requestDraw();
+  if (S.view === 'base') syncBasemap();
 }
 
 function crsCheck() {
@@ -369,6 +416,7 @@ function renderUnits() {
 }
 
 function renderFeatures() {
+  if (S.view === 'base' && S.src) syncBasemap();
   const el = $('feat-summary'); el.textContent = '';
   const n = { polygon: 0, line: 0, point: 0 };
   const per = new Map();
@@ -740,7 +788,10 @@ $('btn-clear-feats').addEventListener('click', () => { S.features = []; renderFe
 $('r-tol').addEventListener('input', () => { $('o-tol').textContent = $('r-tol').value; });
 $('r-detail').addEventListener('input', () => { $('o-detail').textContent = DETAIL[Number($('r-detail').value)][1]; });
 document.querySelectorAll('.tool').forEach((b) => b.addEventListener('click', () => setTool(S.tool === b.dataset.tool && b.dataset.tool !== 'pan' ? 'pan' : b.dataset.tool)));
-$('tb-fit').addEventListener('click', () => viewer.fit());
+$('tb-fit').addEventListener('click', () => (S.view === 'base' ? basemap.fit() : viewer.fit()));
+$('view-scan').addEventListener('click', () => setView('scan'));
+$('view-base').addEventListener('click', () => setView('base'));
+$('base-opacity').addEventListener('input', () => basemap.setOpacity(Number($('base-opacity').value) / 100));
 $('tb-in').addEventListener('click', () => viewer.zoomBy(1.4));
 $('tb-out').addEventListener('click', () => viewer.zoomBy(1 / 1.4));
 for (const id of ['show-grid', 'show-gcps', 'show-feats']) $(id).addEventListener('change', () => viewer.requestDraw());
@@ -765,4 +816,4 @@ renderFeatures(); refreshEnabled();
 log('Ready. Load a scanned map to begin.');
 
 // Handle for tests and for debugging in the browser console.
-window.amano = { state: S, viewer, AI, loadFile, autoGeoref, readLegendAI, extract, refit, setCRS, runDetect, exporters, version: VERSION };
+window.amano = { state: S, viewer, basemap, setView, AI, loadFile, autoGeoref, readLegendAI, extract, refit, setCRS, runDetect, exporters, version: VERSION };

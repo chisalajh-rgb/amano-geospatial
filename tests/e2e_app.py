@@ -74,10 +74,11 @@ async def main():
             ctx = await b.new_context(viewport={"width": 1440, "height": 900}, accept_downloads=True)
             pg = await ctx.new_page()
             errors = []
-            pg.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
+            pg.on("console", lambda m: errors.append(m.text) if m.type == "error" and "Failed to load resource" not in m.text else None)
             pg.on("pageerror", lambda e: errors.append(str(e)))
             failed = []
-            pg.on("response", lambda r: failed.append((r.status, r.url)) if r.status >= 400 else None)
+            pg.on("response", lambda r: failed.append((r.status, r.url)) if r.status >= 400 and "openstreetmap.org" not in r.url else None)
+            pg.on("console", lambda m: None)
             await pg.goto(f"http://localhost:{PORT}/app/")
             await pg.wait_for_function("window.amano && window.amano.version")
             await pg.screenshot(path=f"{OUT}/01-empty.png")
@@ -148,6 +149,19 @@ async def main():
             await pg.evaluate("amano.viewer.centerOn(900, 900, 1.6)")
             await pg.wait_for_timeout(300)
             await pg.screenshot(path=f"{OUT}/06-zoom.png")
+
+            # --- basemap view: the scan must sit at its true position on the web map
+            await pg.click("#view-base")
+            await pg.wait_for_function("amano.basemap.img && amano.basemap.corners")
+            await pg.wait_for_timeout(1200)
+            r = await pg.evaluate("""(() => { const b = amano.basemap, c = b.map.getCenter(); const r = b.img.getBoundingClientRect(), s = document.getElementById('basemap').getBoundingClientRect();
+                return { lat: c.lat, lon: c.lng, zoom: b.map.getZoom(), layers: b.features.getLayers()[0].getLayers().length, imgW: r.width, imgH: r.height, inside: r.left >= s.left - 2 && r.right <= s.right + 2,
+                         tiles: document.querySelectorAll('#basemap img.leaflet-tile').length, viewHidden: document.getElementById('view').hidden }; })()""")
+            print("basemap:", r)
+            ok &= abs(r["lat"] + 12.277) < 0.02 and abs(r["lon"] - 25.755) < 0.02 and r["layers"] == 13 and r["imgW"] > 300 and r["inside"] and r["viewHidden"]
+            await pg.screenshot(path=f"{OUT}/08-basemap.png")
+            await pg.click("#view-scan")
+            ok &= not await pg.evaluate("document.getElementById('view').hidden")
 
             # --- export everything
             async with pg.expect_download(timeout=180000) as dl:

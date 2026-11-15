@@ -41,7 +41,10 @@ a{color:var(--cobalt2)}
 .panel{width:348px;flex:0 0 348px;overflow-y:auto;border-right:1px solid var(--line);background:#fff;padding:6px 14px 20px}
 .stage{flex:1;position:relative;background:var(--stage);min-width:0;
   background-image:linear-gradient(rgba(13,42,84,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(13,42,84,.045) 1px,transparent 1px);background-size:32px 32px}
-#view{position:absolute;inset:0;width:100%;height:100%;cursor:grab;touch-action:none}
+#basemap{position:absolute;inset:0;z-index:0;isolation:isolate;background:var(--stage)}
+#basemap .scan-overlay{position:absolute;left:0;top:0;transform-origin:0 0;max-width:none;max-height:none;pointer-events:none;image-rendering:auto}
+#basemap .leaflet-control-attribution{font-size:11px}
+#view{position:absolute;inset:0;width:100%;height:100%;cursor:grab;touch-action:none;z-index:1;background:var(--stage)}
 #view.grabbing{cursor:grabbing}
 #view.crosshair{cursor:crosshair}
 
@@ -115,18 +118,21 @@ table.gcps .del:hover{color:var(--bad)}
 .foot{font-size:11.5px;color:var(--slate);margin-top:12px}
 
 /* stage furniture */
-.toolbar{position:absolute;top:12px;left:12px;max-width:calc(100% - 24px);flex-wrap:wrap;display:flex;align-items:center;gap:2px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:4px;box-shadow:0 6px 20px -12px rgba(13,42,84,.5)}
+.toolbar{z-index:3;position:absolute;top:12px;left:12px;max-width:calc(100% - 24px);flex-wrap:wrap;display:flex;align-items:center;gap:2px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:4px;box-shadow:0 6px 20px -12px rgba(13,42,84,.5)}
 .tb{border:0;background:none;border-radius:7px;padding:6px 10px;font-size:13px;font-weight:600;color:var(--cobalt);cursor:pointer}
 .tb:hover{background:#eef2f8} .tb.on{background:var(--cobalt);color:#fff}
 .tb.check{display:flex;align-items:center;gap:5px;font-weight:500;color:#3b4a60}
 .tb.check input{accent-color:var(--cobalt)}
+.seg{display:inline-flex;gap:2px;background:#eef2f8;border-radius:8px;padding:2px}
+.seg .tb{padding:5px 10px}
+.tb.check input[type=range]{width:90px;accent-color:var(--amber)}
 .sep{width:1px;height:20px;background:var(--line);margin:0 4px}
-.status{position:absolute;left:12px;bottom:12px;background:rgba(9,31,64,.88);color:#dbe7f7;font-size:12px;border-radius:8px;padding:5px 10px;font-variant-numeric:tabular-nums;max-width:calc(100% - 24px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;gap:10px;pointer-events:none}
+.status{z-index:3;position:absolute;left:12px;bottom:12px;background:rgba(9,31,64,.88);color:#dbe7f7;font-size:12px;border-radius:8px;padding:5px 10px;font-variant-numeric:tabular-nums;max-width:calc(100% - 24px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{position:absolute;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%);width:min(520px,calc(100% - 32px));display:flex;flex-direction:column;align-items:center;text-align:center;padding:26px 28px;gap:10px;pointer-events:none;background:rgba(255,255,255,.93);border:1px solid var(--line);border-radius:18px;box-shadow:0 30px 70px -35px rgba(9,31,64,.75);backdrop-filter:blur(3px)}
 .empty h1{font-size:clamp(20px,2.6vw,28px);color:var(--cobalt);letter-spacing:-.5px;max-width:22ch}
 .empty p{color:var(--slate);max-width:52ch;font-size:15px}
 .stage.over::after{content:"Drop the map to load it";position:absolute;inset:14px;border:2px dashed var(--amber);border-radius:16px;background:rgba(255,248,238,.9);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--cobalt)}
-.busy{position:absolute;inset:0;background:rgba(233,238,246,.72);display:flex;align-items:center;justify-content:center;z-index:5}
+.busy{position:absolute;inset:0;z-index:5;background:rgba(233,238,246,.72);display:flex;align-items:center;justify-content:center;z-index:5}
 .busy .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 24px;min-width:260px;max-width:380px;text-align:center;box-shadow:0 24px 60px -30px rgba(13,42,84,.6)}
 .busy p{margin-top:10px;font-weight:600;color:var(--cobalt)}
 .spin{width:26px;height:26px;border-radius:50%;border:3px solid #dbe4f1;border-top-color:var(--amber);margin:0 auto;animation:sp .8s linear infinite}

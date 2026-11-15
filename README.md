@@ -28,6 +28,9 @@ The Amano Georeferencer (beta) runs entirely in the browser at `/app/`:
   (or you type the first line's value and the spacing), fits the map and reports the error.
 - **Digitize:** reads the legend with AI or takes colours you pick, and traces the units as polygons;
   magic wand, polygon, line and point tools for the rest.
+- **Basemap:** an OpenStreetMap view shows the georeferenced scan and features over real ground, to check
+  the map landed in the right place. Tiles come from openstreetmap.org, which is free for light use only;
+  heavy traffic needs a paid tile provider.
 - **Export:** GeoTIFF, Shapefile, GeoJSON, QGIS control points, world file and an audit log.
 
 AI steps need either the user's own Anthropic API key (entered in the app's Settings, kept in their
@@ -36,7 +39,7 @@ browser) or the optional server in `proxy/`. Never commit an API key.
 | Path | What it is |
 | --- | --- |
 | `app/js/` | The engine: `grid.js` (line detection), `georef.js` (fitting), `ai.js`, `digitize.js`, `tiff.js`, `vector.js` … |
-| `app/vendor/` | Third-party libraries (proj4js, UTIF.js, pako) with their licences |
+| `app/vendor/` | Third-party libraries (proj4js, Leaflet, UTIF.js, pako) with their licences |
 | `app/sample/` | A synthetic sample map (invented geology) |
 | `proxy/` | Optional AI server (Cloudflare Worker) |
 | `tools/` | Scripts that generate the sample map and the coordinate-system list |
