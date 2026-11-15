@@ -75,8 +75,11 @@ Every push to `main` republishes the site automatically.
 
 ## Email on the domain
 
-The site's buttons open an email to `hello@amanogeospatial.com`, so that
-mailbox has to exist before you announce the site.
+The site's buttons currently open an email to `chisalajh@gmail.com`, a
+temporary address, so the site can go live before the domain mailbox exists.
+When you are ready for an address on the domain (for example
+`hello@amanogeospatial.com`), set it up as below and then swap the address in
+`index.html`.
 
 **Zoho Mail (free tier).** Note two limits before choosing it: the free plan is
 only offered in some Zoho data-centre regions (you find out at sign-up), and it

@@ -30,10 +30,11 @@ Then open http://localhost:8000.
 
 ## Common edits
 
-**Change the contact email.** The site uses `hello@amanogeospatial.com`.
-To switch (for example to `ken@amanogeospatial.com`), replace every occurrence
-in `index.html` — it appears in the three buttons, the footer and the
-structured-data block near the top.
+**Change the contact email.** The site currently uses `chisalajh@gmail.com`
+as a temporary contact address. Once the mailbox on the domain exists (for
+example `hello@amanogeospatial.com`), replace every occurrence in `index.html` —
+it appears in the three buttons, the footer and the structured-data block near
+the top.
 
 **Change the copy.** Edit the text directly in `index.html`.
 
@@ -49,7 +50,9 @@ rsvg-convert -w 512 -h 512 assets/logo-icon.svg -o assets/icon-512.png
 ## Launch checklist
 
 - [x] Landing page, logo, favicon, social preview, SEO tags
-- [ ] Contact email decided (`hello@` or `ken@`) and copy approved
+- [x] Temporary contact email in place (`chisalajh@gmail.com`)
+- [ ] Copy approved
+- [ ] Contact email switched to an address on the domain
 - [ ] Domain `amanogeospatial.com` registered
 - [ ] Repository pushed to GitHub
 - [ ] Site deployed (GitHub Pages or Cloudflare Pages) — see `docs/DEPLOY.md`
