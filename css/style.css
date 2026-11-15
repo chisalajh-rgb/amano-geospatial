@@ -131,8 +131,7 @@ footer .brand .wm b{color:var(--cobalt)} footer .note a{color:var(--cobalt)}
 
 footer .wrap.copy{display:block;text-align:center;margin-top:22px;padding-top:16px;border-top:1px solid #dce9f2;font-size:13px}
 
-/* product screenshot in the "Why Amano" section */
-.mapcard a{display:block}
-.mapcard .appshot{display:block;width:100%;height:auto;border-radius:10px}
+/* short clip in the "Why Amano" section */
+.mapcard .clip{display:block;width:100%;height:auto;border-radius:10px;background:#eaf4fb}
 .why .two{grid-template-columns:.8fr 1.2fr}
 @media(max-width:860px){.why .two{grid-template-columns:1fr}}
