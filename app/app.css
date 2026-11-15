@@ -233,3 +233,5 @@ dialog::backdrop{background:rgba(28,47,59,.45)}
 .auth{background:linear-gradient(180deg,#d9edf9 0,#f5fafd 55%,#fff 100%)}
 .history{background:linear-gradient(180deg,#eaf4fb 0,#fff 420px)}
 .stage.over::after{border-color:var(--cobalt2)}
+
+.foot.copy{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);text-align:center}
