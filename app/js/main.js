@@ -13,7 +13,7 @@ import { makeZip } from './zip.js';
 import { Basemap } from './basemap.js';
 import * as Account from './account.js';
 
-const VERSION = '0.1.0-beta';
+const VERSION = '0.1.0';
 const $ = (id) => document.getElementById(id);
 
 const S = {

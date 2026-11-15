@@ -22,7 +22,7 @@ It is a plain static site: no build step, no dependencies. Whatever is on the
 
 ## The app (`app/`)
 
-The Amano Georeferencer (beta) runs entirely in the browser at `/app/`:
+The Amano Georeferencer runs entirely in the browser at `/app/`:
 
 - **Georeference:** finds the grid lines on a scan, reads the margin labels and stated datum with AI
   (or you type the first line's value and the spacing), fits the map and reports the error.
@@ -83,7 +83,7 @@ rsvg-convert -w 512 -h 512 assets/logo-icon.svg -o assets/icon-512.png
 ## Launch checklist
 
 - [x] Landing page, logo, favicon, social preview, SEO tags
-- [x] Georeferencer app (beta) at `/app/`
+- [x] Georeferencer app at `/app/`
 - [ ] AI steps tested on real maps with a live API key
 - [x] Temporary contact email in place (`chisala.jh@gmail.com`)
 - [ ] Copy approved

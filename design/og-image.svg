@@ -1,8 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
   <defs>
-    <radialGradient id="bg" cx="0.8" cy="-0.1" r="1.1"><stop offset="0" stop-color="#1d4e8f"/><stop offset="0.55" stop-color="#0d2a54"/><stop offset="1" stop-color="#091f40"/></radialGradient>
-    <linearGradient id="cb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d4e8f"/><stop offset="1" stop-color="#0d2a54"/></linearGradient>
-    <linearGradient id="am" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6b45a"/><stop offset="1" stop-color="#e07d2b"/></linearGradient>
+    <radialGradient id="sphere" cx="36%" cy="30%" r="78%"><stop offset="0" stop-color="#6f9c82"/><stop offset=".5" stop-color="#3f6b55"/><stop offset="1" stop-color="#17251f"/></radialGradient>
+    <radialGradient id="sat" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#f0c08a"/><stop offset="1" stop-color="#b4612f"/></radialGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d99a5b"/><stop offset="1" stop-color="#b4612f"/></linearGradient>
+    <clipPath id="globe"><circle cx="64" cy="64" r="40"/></clipPath>
+    <clipPath id="front"><rect x="-10" y="64" width="148" height="80"/></clipPath>
+  
+    <radialGradient id="bg" cx="0.8" cy="-0.1" r="1.1"><stop offset="0" stop-color="#3f6b55"/><stop offset="0.55" stop-color="#24382f"/><stop offset="1" stop-color="#17251f"/></radialGradient>
+    <linearGradient id="cb0" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3f6b55"/><stop offset="1" stop-color="#24382f"/></linearGradient>
+    <linearGradient id="am" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d99a5b"/><stop offset="1" stop-color="#b4612f"/></linearGradient>
     <pattern id="grid" width="70" height="70" patternUnits="userSpaceOnUse"><path d="M70 0H0V70" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="1"/></pattern>
     <radialGradient id="fade" cx="0.82" cy="0.2" r="0.7"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient>
     <mask id="m"><rect width="1200" height="630" fill="url(#fade)"/></mask>
@@ -11,29 +17,32 @@
   <rect width="1200" height="630" fill="url(#grid)" mask="url(#m)"/>
 
   <!-- mark -->
-  <g transform="translate(80,70) scale(0.78)">
-    <circle cx="64" cy="64" r="57" fill="#ffffff"/>
-    <circle cx="64" cy="64" r="57" fill="none" stroke="url(#cb)" stroke-width="6"/>
-    <circle cx="103.6" cy="103.6" r="3" fill="#1d4e8f"/><circle cx="24.4" cy="103.6" r="3" fill="#1d4e8f"/>
-    <circle cx="103.6" cy="24.4" r="3" fill="#1d4e8f"/><circle cx="24.4" cy="24.4" r="3" fill="#1d4e8f"/>
-    <polygon points="64,22 46,64 82,64" fill="url(#am)"/>
-    <polygon points="46,64 82,64 64,106" fill="url(#cb)"/>
-    <circle cx="64" cy="64" r="4.5" fill="#0d2a54"/><circle cx="64" cy="64" r="1.8" fill="#f6b45a"/>
-    <path d="M64 6 L66.4 16 L64 22 L61.6 16 Z" fill="url(#am)"/>
-    <path d="M56 12 L64 15.5 L72 12 L64 18.5 Z" fill="url(#am)" opacity="0.9"/>
+  <circle cx="130" cy="120" r="62" fill="#ffffff" opacity=".96"/>
+  <g transform="translate(74,64) scale(0.875)">
+  <g transform="rotate(-24 64 64)"><g transform="translate(64 64)"><ellipse rx="57" ry="20" fill="none" stroke="url(#ring)" stroke-width="3.2" opacity=".45"/><g transform="translate(44.9 12.3)"><circle r="6.5" fill="url(#sat)"/><circle r="2.4" fill="#fff" opacity=".85"/></g></g></g>
+  <circle cx="64" cy="64" r="40" fill="url(#sphere)"/>
+  <g clip-path="url(#globe)" fill="none" stroke="#dcebdf" stroke-width="1.5" vector-effect="non-scaling-stroke" opacity=".5">
+    <ellipse cx="64" cy="64" rx="40" ry="9"/><ellipse cx="64" cy="44" rx="34.6" ry="7"/><ellipse cx="64" cy="84" rx="34.6" ry="7"/>
+    <g vector-effect="non-scaling-stroke"><ellipse cx="64" cy="64" rx="35" ry="40"/><ellipse cx="64" cy="64" rx="21" ry="40"/><ellipse cx="64" cy="64" rx="7" ry="40"/></g>
   </g>
-  <text x="198" y="122" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="46" font-weight="700" fill="#ffffff" letter-spacing="-0.8">Amano</text>
-  <text x="200" y="152" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="17" font-weight="600" fill="#f6b45a" letter-spacing="8">GEOSPATIAL</text>
+  <g stroke="#d99a5b" stroke-width="1.6" fill="none" stroke-linecap="round"><path class="link" d="M47 52 L66 44 L80 62 L58 74 Z"/></g>
+  <g fill="#f0c08a"><circle class="node" cx="47" cy="52" r="3.2"/><circle class="node n2" cx="66" cy="44" r="3.2"/><circle class="node n3" cx="80" cy="62" r="3.2"/><circle class="node n2" cx="58" cy="74" r="3.2"/></g>
+  <ellipse cx="50" cy="45" rx="17" ry="11" fill="#fff" opacity=".13" transform="rotate(-30 50 45)"/>
+  <circle cx="64" cy="64" r="40" fill="none" stroke="#24382f" stroke-width="1.5" opacity=".55"/>
+  <g transform="rotate(-24 64 64)" clip-path="url(#front)"><g transform="translate(64 64)"><ellipse rx="57" ry="20" fill="none" stroke="url(#ring)" stroke-width="3.2" opacity="1"/><g transform="translate(44.9 12.3)"><circle r="6.5" fill="url(#sat)"/><circle r="2.4" fill="#fff" opacity=".85"/></g></g></g>
+</g>
+  <text x="212" y="122" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="46" font-weight="700" fill="#ffffff" letter-spacing="-0.8">Amano</text>
+  <text x="214" y="152" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="17" font-weight="600" fill="#d99a5b" letter-spacing="8">GEOSPATIAL</text>
 
   <!-- headline -->
   <g font-family="Inter, 'Segoe UI', Arial, sans-serif" font-weight="700" font-size="76" letter-spacing="-2.2">
     <text x="80" y="318" fill="#ffffff">Georeference and digitize</text>
-    <text x="80" y="406"><tspan fill="#f6b45a">any map</tspan><tspan fill="#ffffff">, automatically.</tspan></text>
+    <text x="80" y="406"><tspan fill="#d99a5b">any map</tspan><tspan fill="#ffffff">, automatically.</tspan></text>
   </g>
-  <text x="80" y="476" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="28" font-weight="400" fill="#c6d6ec">Scanned geological and legacy maps → GIS-ready data.</text>
+  <text x="80" y="476" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="28" font-weight="400" fill="#d5dccf">Scanned geological and legacy maps → GIS-ready data.</text>
 
   <!-- footer line -->
-  <rect x="80" y="536" width="54" height="5" rx="2.5" fill="#e8933b"/>
-  <text x="80" y="580" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="24" font-weight="600" fill="#dbe7f7">amanogeospatial.com</text>
-  <text x="1120" y="580" text-anchor="end" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="22" font-weight="500" fill="#9fb6d6">AI georeferencing · Built in Zambia</text>
+  <rect x="80" y="536" width="54" height="5" rx="2.5" fill="#b4612f"/>
+  <text x="80" y="580" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="24" font-weight="600" fill="#e9ede3">amanogeospatial.com</text>
+  <text x="1120" y="580" text-anchor="end" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="22" font-weight="500" fill="#a9b5a6">AI georeferencing · Built in Zambia</text>
 </svg>
