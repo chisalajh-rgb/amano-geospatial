@@ -151,21 +151,84 @@
           </div>
         </div>
         <div class="mapcard">
-          <svg viewBox="0 0 400 260" width="100%" role="img" aria-label="Illustration of a georeferenced map">
-            <rect width="400" height="260" rx="10" fill="#eaf4fb"/>
-            <path d="M0 120 Q100 90 200 120 T400 120 L400 260 L0 260Z" fill="#e9ede3"/>
-            <path d="M0 160 Q120 135 230 165 T400 160 L400 260 L0 260Z" fill="#dfe6da"/>
-            <g stroke="#c2d9e8" stroke-width="1">
-              <line x1="0" y1="52" x2="400" y2="52"/><line x1="0" y1="104" x2="400" y2="104"/>
-              <line x1="0" y1="156" x2="400" y2="156"/><line x1="0" y1="208" x2="400" y2="208"/>
-              <line x1="80" y1="0" x2="80" y2="260"/><line x1="160" y1="0" x2="160" y2="260"/>
-              <line x1="240" y1="0" x2="240" y2="260"/><line x1="320" y1="0" x2="320" y2="260"/>
+          <!-- map3d --><svg viewBox="0 0 400 260" width="100%" role="img" aria-label="A scanned map floating above a coordinate grid, tied to it by control points">
+            <defs>
+              <linearGradient id="m3-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d6ebf8"/><stop offset="1" stop-color="#ffffff"/></linearGradient>
+              <linearGradient id="m3-ground" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eef7fd"/><stop offset="1" stop-color="#c3def0"/></linearGradient>
+              <linearGradient id="m3-unit" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bfe0f4"/><stop offset="1" stop-color="#8cc4e8"/></linearGradient>
+              <linearGradient id="m3-sheet" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".92"/><stop offset="1" stop-color="#e3f1fa" stop-opacity=".7"/></linearGradient>
+            </defs>
+            <style>
+              .m3-float{animation:m3-float 6s ease-in-out infinite}
+              .m3-scan{animation:m3-scan 4.5s ease-in-out infinite}
+              .m3-pulse{animation:m3-pulse 2.4s ease-in-out infinite}
+              .m3-flow{animation:m3-flow 1.4s linear infinite}
+              @keyframes m3-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+              @keyframes m3-scan{0%,100%{transform:translate(0,0)}50%{transform:translate(var(--dx),var(--dy))}}
+              @keyframes m3-pulse{0%,100%{opacity:1}50%{opacity:.45}}
+              @keyframes m3-flow{to{stroke-dashoffset:-14}}
+              @media (prefers-reduced-motion:reduce){.m3-float,.m3-scan,.m3-pulse,.m3-flow{animation:none}}
+            </style>
+            <rect width="400" height="260" rx="10" fill="url(#m3-bg)"/>
+            <ellipse cx="200" cy="214" rx="150" ry="26" fill="#24506b" opacity=".10"/>
+            <polygon points="83.6,185.0 200.0,252.2 200.0,243.2 83.6,176.0" fill="#9cc7e4" opacity=".55"/>
+            <polygon points="316.4,185.0 200.0,252.2 200.0,243.2 316.4,176.0" fill="#7fb4d8" opacity=".55"/>
+            <polygon points="200.0,108.8 316.4,176.0 200.0,243.2 83.6,176.0" fill="url(#m3-ground)" stroke="#4a94c4" stroke-width="1.2"/>
+            <line x1="219.4" y1="120.0" x2="103.0" y2="187.2" stroke="#4a94c4" stroke-width=".8" opacity=".55"/>
+            <line x1="180.6" y1="120.0" x2="297.0" y2="187.2" stroke="#4a94c4" stroke-width=".8" opacity=".55"/>
+            <line x1="238.8" y1="131.2" x2="122.4" y2="198.4" stroke="#4a94c4" stroke-width=".8" opacity=".55"/>
+            <line x1="161.2" y1="131.2" x2="277.6" y2="198.4" stroke="#4a94c4" stroke-width=".8" opacity=".55"/>
+            <line x1="258.2" y1="142.4" x2="141.8" y2="209.6" stroke="#4a94c4" stroke-width=".8" opacity=".55"/>
+            <line x1="141.8" y1="142.4" x2="258.2" y2="209.6" stroke="#4a94c4" stroke-width=".8" opacity=".55"/>
+            <line x1="277.6" y1="153.6" x2="161.2" y2="220.8" stroke="#4a94c4" stroke-width=".8" opacity=".55"/>
+            <line x1="122.4" y1="153.6" x2="238.8" y2="220.8" stroke="#4a94c4" stroke-width=".8" opacity=".55"/>
+            <line x1="297.0" y1="164.8" x2="180.6" y2="232.0" stroke="#4a94c4" stroke-width=".8" opacity=".55"/>
+            <line x1="103.0" y1="164.8" x2="219.4" y2="232.0" stroke="#4a94c4" stroke-width=".8" opacity=".55"/>
+            <polygon points="207.8,146.9 252.4,165.9 252.4,149.9 207.8,130.9" fill="#7db6da" opacity=".8"/>
+            <polygon points="252.4,165.9 236.9,195.0 236.9,179.0 252.4,149.9" fill="#5d9fca" opacity=".8"/>
+            <polygon points="236.9,195.0 184.5,196.2 184.5,180.2 236.9,179.0" fill="#5d9fca" opacity=".8"/>
+            <polygon points="184.5,196.2 165.1,167.0 165.1,151.0 184.5,180.2" fill="#7db6da" opacity=".8"/>
+            <polygon points="165.1,167.0 207.8,146.9 207.8,130.9 165.1,151.0" fill="#7db6da" opacity=".8"/>
+            <polygon points="207.8,130.9 252.4,149.9 236.9,179.0 184.5,180.2 165.1,151.0" fill="url(#m3-unit)" stroke="#ffffff" stroke-width="1"/>
+            <line x1="205.8" y1="147.7" x2="205.8" y2="123.7" stroke="#24506b" stroke-width="1.4"/>
+            <circle class="m3-pulse" cx="205.8" cy="123.7" r="4.2" fill="#24506b" stroke="#fff" stroke-width="1.2"/>
+            <line x1="221.3" y1="163.4" x2="221.3" y2="139.4" stroke="#24506b" stroke-width="1.4"/>
+            <circle class="m3-pulse" cx="221.3" cy="139.4" r="4.2" fill="#24506b" stroke="#fff" stroke-width="1.2"/>
+            <line x1="190.3" y1="163.4" x2="190.3" y2="139.4" stroke="#24506b" stroke-width="1.4"/>
+            <circle class="m3-pulse" cx="190.3" cy="139.4" r="4.2" fill="#24506b" stroke="#fff" stroke-width="1.2"/>
+            <line x1="200.0" y1="108.8" x2="200.0" y2="24.8" stroke="#4a94c4" stroke-width="1.3" stroke-dasharray="3 4" class="m3-flow"/>
+            <circle cx="200.0" cy="108.8" r="3" fill="#fff" stroke="#4a94c4" stroke-width="1.4"/>
+            <line x1="316.4" y1="176.0" x2="316.4" y2="92.0" stroke="#4a94c4" stroke-width="1.3" stroke-dasharray="3 4" class="m3-flow"/>
+            <circle cx="316.4" cy="176.0" r="3" fill="#fff" stroke="#4a94c4" stroke-width="1.4"/>
+            <line x1="200.0" y1="243.2" x2="200.0" y2="159.2" stroke="#4a94c4" stroke-width="1.3" stroke-dasharray="3 4" class="m3-flow"/>
+            <circle cx="200.0" cy="243.2" r="3" fill="#fff" stroke="#4a94c4" stroke-width="1.4"/>
+            <line x1="83.6" y1="176.0" x2="83.6" y2="92.0" stroke="#4a94c4" stroke-width="1.3" stroke-dasharray="3 4" class="m3-flow"/>
+            <circle cx="83.6" cy="176.0" r="3" fill="#fff" stroke="#4a94c4" stroke-width="1.4"/>
+            <g class="m3-float">
+            <polygon points="200.0,24.8 316.4,92.0 200.0,159.2 83.6,92.0" fill="url(#m3-sheet)" stroke="#24506b" stroke-width="1.3"/>
+            <line x1="219.4" y1="36.0" x2="103.0" y2="103.2" stroke="#24506b" stroke-width=".5" opacity=".22"/>
+            <line x1="180.6" y1="36.0" x2="297.0" y2="103.2" stroke="#24506b" stroke-width=".5" opacity=".22"/>
+            <line x1="238.8" y1="47.2" x2="122.4" y2="114.4" stroke="#24506b" stroke-width=".5" opacity=".22"/>
+            <line x1="161.2" y1="47.2" x2="277.6" y2="114.4" stroke="#24506b" stroke-width=".5" opacity=".22"/>
+            <line x1="258.2" y1="58.4" x2="141.8" y2="125.6" stroke="#24506b" stroke-width=".5" opacity=".22"/>
+            <line x1="141.8" y1="58.4" x2="258.2" y2="125.6" stroke="#24506b" stroke-width=".5" opacity=".22"/>
+            <line x1="277.6" y1="69.6" x2="161.2" y2="136.8" stroke="#24506b" stroke-width=".5" opacity=".22"/>
+            <line x1="122.4" y1="69.6" x2="238.8" y2="136.8" stroke="#24506b" stroke-width=".5" opacity=".22"/>
+            <line x1="297.0" y1="80.8" x2="180.6" y2="148.0" stroke="#24506b" stroke-width=".5" opacity=".22"/>
+            <line x1="103.0" y1="80.8" x2="219.4" y2="148.0" stroke="#24506b" stroke-width=".5" opacity=".22"/>
+            <polygon points="207.8,62.9 252.4,81.9 236.9,111.0 184.5,112.2 165.1,83.0" fill="#8cc4e8" opacity=".45" stroke="#24506b" stroke-width=".9"/>
+            <polyline points="110.8,85.3 113.4,89.8 116.8,93.9 121.5,97.2 127.9,99.6 136.1,100.9 145.7,101.4 156.2,101.4 167.1,101.2 177.4,101.3 186.5,102.0 194.1,103.7 199.9,106.4 204.1,110.0 207.2,114.3 209.7,118.9 212.6,123.3 216.4,127.1 221.6,130.1 228.6,132.1" fill="none" stroke="#24506b" stroke-width=".8" opacity=".45"/>
+            <circle cx="205.8" cy="79.7" r="2" fill="#24506b"/>
+            <circle cx="221.3" cy="95.4" r="2" fill="#24506b"/>
+            <circle cx="190.3" cy="95.4" r="2" fill="#24506b"/>
+            <g class="m3-scan" style="--dx:-116.4px;--dy:67.2px"><line x1="200.0" y1="24.8" x2="316.4" y2="92.0" stroke="#ffffff" stroke-width="5" opacity=".55" stroke-linecap="round"/><line x1="200.0" y1="24.8" x2="316.4" y2="92.0" stroke="#4a94c4" stroke-width="1.6" stroke-linecap="round"/></g>
+            <circle class="m3-pulse" cx="200.0" cy="24.8" r="4" fill="#4a94c4" stroke="#fff" stroke-width="1.4"/>
+            <circle class="m3-pulse" cx="316.4" cy="92.0" r="4" fill="#4a94c4" stroke="#fff" stroke-width="1.4"/>
+            <circle class="m3-pulse" cx="200.0" cy="159.2" r="4" fill="#4a94c4" stroke="#fff" stroke-width="1.4"/>
+            <circle class="m3-pulse" cx="83.6" cy="92.0" r="4" fill="#4a94c4" stroke="#fff" stroke-width="1.4"/>
             </g>
-            <polygon points="150,70 250,60 300,130 210,160 130,120" fill="#b9dcf2" opacity="0.55" stroke="#8cc4e8"/>
-            <circle cx="190" cy="100" r="5" fill="#24506b"/><circle cx="235" cy="118" r="5" fill="#24506b"/>
-            <circle cx="165" cy="128" r="5" fill="#24506b"/>
-            <image href="assets/logo-icon.svg" x="344" y="202" width="42" height="42"/>
-          </svg>
+            <g font-family="Inter, Segoe UI, Arial, sans-serif" font-size="8.5" font-weight="600" fill="#24506b" opacity=".8"><text x="77.6" y="180.0" text-anchor="end">8 646 000 N</text><text x="323.4" y="180.0">364 000 E</text></g>
+          </svg><!-- /map3d -->
         </div>
       </div>
     </div>
