@@ -30,6 +30,8 @@ The Amano Georeferencer (beta) runs entirely in the browser at `/app/`:
   magic wand, polygon, line and point tools for the rest.
 - **Batch:** choose many scans; each is georeferenced with AI in turn and saved as a GeoTIFF with its
   control points and audit log, plus a summary CSV that flags the maps a person should check.
+- **Accounts and history (off until configured):** email-and-password sign-in and a per-user history of
+  maps worked on. Needs a Supabase project: see `backend/README.md`.
 - **Basemap:** an OpenStreetMap view shows the georeferenced scan and features over real ground, to check
   the map landed in the right place. Tiles come from openstreetmap.org, which is free for light use only;
   heavy traffic needs a paid tile provider.
@@ -44,6 +46,7 @@ browser) or the optional server in `proxy/`. Never commit an API key.
 | `app/vendor/` | Third-party libraries (proj4js, Leaflet, geotiff.js, UTIF.js, pako) with their licences |
 | `app/sample/` | A synthetic sample map (invented geology) |
 | `proxy/` | Optional AI server (Cloudflare Worker) |
+| `backend/` | Accounts and history: database schema and Supabase setup steps |
 | `tools/` | Scripts that generate the sample map and the coordinate-system list |
 | `tests/` | Engine tests (`node tests/test_*.mjs`) and a browser test (`python3 tests/e2e_app.py`) |
 

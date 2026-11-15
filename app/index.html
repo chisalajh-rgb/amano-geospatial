@@ -19,9 +19,22 @@
     <span class="wm"><b>Amano</b><span>GEOSPATIAL</span></span>
   </a>
   <span class="product">Georeferencer <i>beta</i></span>
+  <nav class="views" id="views" hidden aria-label="Sections">
+    <button class="vtab on" id="nav-work" type="button">Workspace</button>
+    <button class="vtab" id="nav-history" type="button">History</button>
+  </nav>
   <span class="grow"></span>
   <button class="chip" id="ai-chip" type="button" title="Connection for the automatic steps">Auto: not connected</button>
   <button class="btn quiet" id="btn-settings" type="button">Settings</button>
+  <div class="acct" id="acct" hidden>
+    <button class="acct-btn" id="acct-btn" type="button" aria-haspopup="true" aria-expanded="false" title="Your account"><span id="acct-initials"></span></button>
+    <div class="acct-menu" id="acct-menu" hidden>
+      <div class="who"><b id="acct-name"></b><span id="acct-email"></span></div>
+      <div class="use"><b>This month</b><span id="acct-usage">0 maps</span></div>
+      <button class="item" id="acct-history" type="button">History</button>
+      <button class="item out" id="acct-signout" type="button">Sign out</button>
+    </div>
+  </div>
 </header>
 
 <div class="layout">
@@ -179,6 +192,42 @@
   </main>
 </div>
 
+<section class="history" id="history" hidden>
+  <div class="hwrap">
+    <input type="search" id="hist-search" placeholder="Search history…" aria-label="Search history">
+    <div class="tablewrap htable">
+      <table class="gcps hist">
+        <thead><tr><th>Preview</th><th>Map</th><th>Status</th><th>Coordinate system</th><th>Points</th><th>Err px</th><th>Time</th><th></th></tr></thead>
+        <tbody id="hist-body"></tbody>
+      </table>
+    </div>
+    <p class="hint" id="hist-count"></p>
+  </div>
+</section>
+
+<div class="auth" id="auth" hidden>
+  <form class="auth-card" id="auth-form" novalidate>
+    <img src="logo.svg" alt="" width="54" height="54">
+    <h1 id="auth-title">Sign in</h1>
+    <p class="hint" id="auth-sub">Sign in to georeference maps and keep a history of your work.</p>
+    <label class="field" id="auth-name-row" hidden>Your name
+      <input type="text" id="auth-name" autocomplete="name">
+    </label>
+    <label class="field" id="auth-email-row">Email address
+      <input type="email" id="auth-email" autocomplete="email" required>
+    </label>
+    <label class="field" id="auth-pass-row">Password
+      <input type="password" id="auth-pass" autocomplete="current-password" minlength="8" required>
+    </label>
+    <p class="hint" id="auth-msg" role="status"></p>
+    <button class="btn primary wide" id="auth-submit" type="submit">Sign in</button>
+    <div class="auth-links">
+      <button class="link" id="auth-switch" type="button">Create an account</button>
+      <button class="link" id="auth-forgot" type="button">Forgot password?</button>
+    </div>
+  </form>
+</div>
+
 <dialog id="batch" class="wide">
   <div class="dlg">
     <h2>Batch georeferencing</h2>
@@ -238,6 +287,7 @@
 </dialog>
 
 <script src="config.js"></script>
+<script src="vendor/supabase.js"></script>
 <script src="vendor/proj4.js"></script>
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/pako_inflate.min.js"></script>

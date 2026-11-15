@@ -4,4 +4,9 @@
 // Never put an API key in this file: everything here is public.
 window.AMANO_CONFIG = {
   proxyUrl: '',
+
+  // Accounts and history (see /backend/README.md). Leave both empty to run without sign-in.
+  // Use the anon / publishable key only: never the service_role key.
+  supabaseUrl: '',
+  supabaseAnonKey: '',
 };

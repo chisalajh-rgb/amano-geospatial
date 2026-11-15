@@ -11,6 +11,7 @@ import { buildWorkImage, sampleColor, rgbToLab, extractUnits, wandSelect, lattic
 import { toGeoJSON, writeShapefile, polygonArea, pointsToCSV } from './vector.js';
 import { makeZip } from './zip.js';
 import { Basemap } from './basemap.js';
+import * as Account from './account.js';
 
 const VERSION = '0.1.0-beta';
 const $ = (id) => document.getElementById(id);
@@ -143,6 +144,7 @@ async function loadFileCore(file) {
     $('crs').value = ''; $('crs-note').textContent = 'Leave empty for a local mine grid.'; $('crs-note').className = 'hint';
     $('assist-form').hidden = true;
     basemap.clear(); basemapStamp = '';
+    S.historyId = null;
     setView('scan');
     viewer.setImage(src.canvas, src.width, src.height);
     $('empty').hidden = true; $('toolbar').hidden = false; $('status').hidden = false; viewer.resize(); viewer.fit();
@@ -365,6 +367,7 @@ async function autoGeorefCore({ quiet = false } = {}) {
       log('The coordinate system could not be determined from the sheet. Choose it in the Georeference panel.', 'warn');
     }
     setGcps(gcps);
+    touchHistory();
     const m = S.model;
     if (m) {
       log(`Fitted: typical error ${fmt(m.rmsPx, 2)} px (${fmt(m.rms, S.crs?.kind === 'geographic' ? 6 : 2)} ${mapUnit()}), pixel size ${fmt(m.resolution, 3)} ${mapUnit()}.`, m.rmsPx <= 1.5 ? 'good' : 'warn');
@@ -387,6 +390,7 @@ function applyAssist() {
   g.vertical.forEach((l) => { l.value = e0 + (l.k - kv) * Math.abs(de); });
   g.horizontal.forEach((l) => { l.value = n0 - (l.k - kh) * Math.abs(dn); });
   setGcps(gcpsFromGrid(g.vertical, g.horizontal, 'grid-assist'));
+  touchHistory();
   log(`Grid assist: ${S.gcps.length} control points from the detected lines (first line ${e0}, ${n0}; spacing ${Math.abs(de)} × ${Math.abs(dn)}).`);
 }
 
@@ -491,6 +495,7 @@ async function extract() {
     if (!polygons.length) toast('No areas matched those colours. Raise “Colour match” or pick the colours again.');
     $('show-feats').checked = true;
     renderFeatures(); refreshEnabled(); viewer.requestDraw();
+    touchHistory();
   });
 }
 
@@ -845,6 +850,7 @@ async function batchRun() {
             output = `${base}_amano.zip`;
           }
         }
+        await saveHistoryNow();
         Object.assign(row, { status: v.status, note: v.note, crs: S.crs ? `EPSG:${S.crs.code}` : '', points: m ? m.n : 0, rmsPx: m ? m.rmsPx : null });
         row.csv = { file: row.file, status: v.status, note: v.note, crs_epsg: S.crs?.code ?? '', crs_name: S.crs?.name ?? '', crs_confidence: B.fixedCrs ? 'set by user' : S.aiCrsConfidence ?? '',
           points_used: m ? m.n : 0, points_set_aside: S.gcps.filter((g) => g.rejected).length, rms_px: m ? m.rmsPx.toFixed(3) : '', rms_map_units: m ? m.rms : '', pixel_size: m ? m.resolution : '',
@@ -884,6 +890,148 @@ $('batch-stop').addEventListener('click', () => { B.stop = true; $('batch-progre
 $('batch-summary').addEventListener('click', () => download('amano_batch_summary.csv', batchSummaryCSV(), 'text/csv'));
 $('batch-close').addEventListener('click', () => { if (!B.running) $('batch').close(); else toast('Stop the batch first.'); });
 $('batch').addEventListener('cancel', (e) => { if (B.running) e.preventDefault(); });
+
+
+// ------------------------------------------------------------------ accounts and history
+
+let historyTimer = 0, historyRows = [], historyExports = new Set();
+
+function historyRecord() {
+  const m = S.model;
+  const t = document.createElement('canvas'); t.width = 96; t.height = Math.max(1, Math.round((96 * S.src.height) / S.src.width));
+  t.getContext('2d').drawImage(S.src.canvas, 0, 0, t.width, t.height);
+  const n = (type) => S.features.filter((f) => f.type === type).length;
+  return {
+    file_name: S.src.name, title: S.ai?.title || null, status: S.features.length ? 'Digitized' : 'Georeferenced',
+    crs: S.crs ? `EPSG:${S.crs.code} ${S.crs.name}` : null, points: m.n, rms_px: Number(m.rmsPx.toFixed(3)),
+    thumbnail: t.toDataURL('image/jpeg', 0.7), updated_at: new Date().toISOString(),
+    details: { transform: m.type, pixelSize: m.resolution, rotationDeg: m.rotationDeg, polygons: n('polygon'), lines: n('line'), points: n('point'), units: S.units.map((u) => u.code), exports: [...historyExports], width: S.src.width, height: S.src.height },
+  };
+}
+
+async function saveHistoryNow() {
+  clearTimeout(historyTimer);
+  if (!Account.currentUser() || !S.src || !S.model) return;
+  try { S.historyId = await Account.saveRecord(historyRecord(), S.historyId); }
+  catch (e) { console.warn(e); log('This map could not be added to your history. ' + (e.message || ''), 'warn'); }
+}
+/** Note that the current map changed; saved to the signed-in user's history shortly afterwards. */
+function touchHistory(exportId) {
+  if (!Account.currentUser() || !S.src || !S.model) return;
+  if (!S.historyId) historyExports = new Set();
+  if (exportId) historyExports.add(exportId.replace('ex-', ''));
+  clearTimeout(historyTimer);
+  historyTimer = setTimeout(saveHistoryNow, 1200);
+}
+
+function renderHistory() {
+  const q = $('hist-search').value.trim().toLowerCase();
+  const rows = historyRows.filter((r) => !q || `${r.file_name} ${r.title || ''} ${r.status} ${r.crs || ''}`.toLowerCase().includes(q));
+  const body = $('hist-body'); body.textContent = '';
+  for (const r of rows) {
+    const tr = document.createElement('tr');
+    const td = (el) => { const c = document.createElement('td'); if (el instanceof Node) c.append(el); else c.textContent = el ?? ''; tr.append(c); return c; };
+    const img = document.createElement('img'); img.alt = ''; if (/^data:image\/(jpeg|png);base64,/.test(r.thumbnail || '')) img.src = r.thumbnail;
+    td(img);
+    const t = document.createElement('div'); t.className = 't'; const b = document.createElement('b'); b.textContent = r.title || r.file_name; const sp = document.createElement('span'); sp.textContent = r.file_name; t.append(b, sp); td(t);
+    const pill = document.createElement('span'); pill.className = 'pill' + (r.status === 'Digitized' ? '' : ' geo'); pill.textContent = r.status; td(pill);
+    td(r.crs || 'Local grid'); td(r.points ?? ''); td(r.rms_px != null ? fmt(r.rms_px, 2) : '');
+    td(new Date(r.updated_at || r.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }));
+    const del = document.createElement('button'); del.className = 'del'; del.type = 'button'; del.textContent = '×'; del.title = 'Remove from history';
+    del.addEventListener('click', async () => {
+      if (!confirm(`Remove “${r.title || r.file_name}” from your history?`)) return;
+      try { await Account.deleteRecord(r.id); historyRows = historyRows.filter((x) => x !== r); if (S.historyId === r.id) S.historyId = null; renderHistory(); } catch (e) { toast(e.message, 'bad'); }
+    });
+    td(del);
+    body.append(tr);
+  }
+  $('hist-count').textContent = !historyRows.length ? 'Nothing here yet. Maps you georeference will be listed here.' : rows.length === historyRows.length ? `Showing all ${rows.length} record${rows.length === 1 ? '' : 's'}` : `Showing ${rows.length} of ${historyRows.length} records`;
+  const now = new Date(), month = historyRows.filter((r) => { const d = new Date(r.created_at); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); }).length;
+  $('acct-usage').textContent = `${month} map${month === 1 ? '' : 's'}`;
+}
+
+async function loadHistory() {
+  try { await saveHistoryNow(); historyRows = await Account.listRecords(); } catch (e) { toast(e.message, 'bad'); }
+  renderHistory();
+}
+
+function showSection(name) {
+  const hist = name === 'history';
+  $('history').hidden = !hist; document.querySelector('.layout').hidden = hist;
+  $('nav-work').classList.toggle('on', !hist); $('nav-history').classList.toggle('on', hist);
+  $('acct-menu').hidden = true;
+  if (hist) loadHistory(); else { viewer.resize(); basemap.resize(); }
+}
+
+let authMode = 'signin';
+function setAuthMode(mode, msg = '', level = '') {
+  authMode = mode;
+  const T = { signin: ['Sign in', 'Sign in to georeference maps and keep a history of your work.', 'Sign in'], signup: ['Create your account', 'Use your email address and choose a password.', 'Create account'],
+    forgot: ['Reset your password', 'Enter your email and we will send you a link to choose a new password.', 'Send the link'], newpass: ['Choose a new password', 'Enter a new password for your account.', 'Save password'] }[mode];
+  $('auth-title').textContent = T[0]; $('auth-sub').textContent = T[1]; $('auth-submit').textContent = T[2];
+  $('auth-name-row').hidden = mode !== 'signup'; $('auth-email-row').hidden = mode === 'newpass'; $('auth-pass-row').hidden = mode === 'forgot';
+  $('auth-pass').autocomplete = mode === 'signin' ? 'current-password' : 'new-password';
+  $('auth-switch').textContent = mode === 'signin' ? 'Create an account' : 'I already have an account';
+  $('auth-switch').hidden = mode === 'newpass'; $('auth-forgot').hidden = mode !== 'signin';
+  $('auth-msg').textContent = msg; $('auth-msg').className = 'hint ' + level;
+}
+
+/** Clear the loaded map and everything derived from it (used when someone signs out). */
+function resetWorkspace() {
+  clearTimeout(historyTimer);
+  Object.assign(S, { src: null, gray: null, grid: null, frame: null, ai: null, legendBox: null, crs: null, gcps: [], nextId: 1, model: null,
+    units: [], work: null, features: [], nextFid: 1, draft: null, aiLabels: null, historyId: null });
+  viewer.setImage(null, 0, 0); viewer.requestDraw();
+  basemap.clear(); basemapStamp = '';
+  $('toolbar').hidden = true; $('status').hidden = true; $('crs').value = ''; $('log').textContent = ''; S.log = [];
+  $('file-info').textContent = 'Your map stays in this browser. Nothing leaves it unless you run an automatic step.';
+  B.files = []; B.rows = [];
+  setTool('pan'); setView('base'); renderGcps(); renderFit(); renderUnits(); renderFeatures(); refreshEnabled();
+}
+
+function onAccountChange(user, event) {
+  if (event === 'PASSWORD_RECOVERY') { $('auth').hidden = false; setAuthMode('newpass'); return; }
+  $('auth').hidden = !!user;
+  $('acct').hidden = $('views').hidden = !user;
+  if (!user) { setAuthMode('signin'); showSection('work'); historyRows = []; resetWorkspace(); renderHistory(); return; }
+  const name = Account.displayName();
+  $('acct-name').textContent = name; $('acct-email').textContent = user.email || '';
+  $('acct-initials').textContent = name.split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('') || '?';
+  $('auth-pass').value = '';
+  Account.listRecords().then((r) => { historyRows = r; renderHistory(); }).catch(() => {});
+}
+
+$('auth-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const name = $('auth-name').value.trim(), email = $('auth-email').value.trim(), pass = $('auth-pass').value;
+  const fail = (m) => setAuthMode(authMode, m, 'bad');
+  if (authMode !== 'newpass' && !/^\S+@\S+\.\S+$/.test(email)) return fail('Enter your email address.');
+  if (authMode === 'signup' && !name) return fail('Enter your name.');
+  if ((authMode === 'signup' || authMode === 'newpass') && pass.length < 8) return fail('Choose a password of at least 8 characters.');
+  if (authMode === 'signin' && !pass) return fail('Enter your password.');
+  $('auth-submit').disabled = true;
+  try {
+    if (authMode === 'signin') await Account.signIn(email, pass);
+    else if (authMode === 'signup') { const r = await Account.signUp(name, email, pass); if (r.needsConfirmation) setAuthMode('signin', 'Almost there. Open the confirmation link we sent to ' + email + ', then sign in.', 'good'); }
+    else if (authMode === 'forgot') { await Account.sendPasswordReset(email); setAuthMode('signin', 'If that email has an account, a reset link is on its way.', 'good'); }
+    else { await Account.setNewPassword(pass); $('auth').hidden = !Account.currentUser(); toast('Password changed.', 'good'); onAccountChange(Account.currentUser()); }
+  } catch (err) { fail(err.message); }
+  $('auth-submit').disabled = false;
+});
+$('auth-switch').addEventListener('click', () => setAuthMode(authMode === 'signin' ? 'signup' : 'signin'));
+$('auth-forgot').addEventListener('click', () => setAuthMode('forgot'));
+$('acct-btn').addEventListener('click', (e) => { e.stopPropagation(); $('acct-menu').hidden = !$('acct-menu').hidden; $('acct-btn').setAttribute('aria-expanded', String(!$('acct-menu').hidden)); });
+document.addEventListener('click', (e) => { if (!$('acct').contains(e.target)) $('acct-menu').hidden = true; });
+$('acct-signout').addEventListener('click', async () => { try { await saveHistoryNow(); await Account.signOut(); } catch (e) { toast(e.message, 'bad'); } });
+$('acct-history').addEventListener('click', () => showSection('history'));
+$('nav-work').addEventListener('click', () => showSection('work'));
+$('nav-history').addEventListener('click', () => showSection('history'));
+$('hist-search').addEventListener('input', renderHistory);
+
+if (Account.configured()) {
+  $('auth').hidden = false; setAuthMode('signin');
+  Account.init(onAccountChange).then((u) => onAccountChange(u)).catch((e) => setAuthMode('signin', e.message, 'bad'));
+}
 
 // ------------------------------------------------------------------ settings
 
@@ -943,7 +1091,7 @@ $('base-opacity').addEventListener('input', () => basemap.setOpacity(Number($('b
 $('tb-in').addEventListener('click', () => viewer.zoomBy(1.4));
 $('tb-out').addEventListener('click', () => viewer.zoomBy(1 / 1.4));
 for (const id of ['show-grid', 'show-gcps', 'show-feats']) $(id).addEventListener('change', () => viewer.requestDraw());
-for (const [id, fn] of Object.entries(exporters)) $(id).addEventListener('click', fn);
+for (const [id, fn] of Object.entries(exporters)) $(id).addEventListener('click', async () => { await fn(); touchHistory(id); });
 $('btn-settings').addEventListener('click', openSettings);
 $('ai-chip').addEventListener('click', openSettings);
 window.addEventListener('keydown', (e) => {
@@ -965,4 +1113,4 @@ renderFeatures(); refreshEnabled();
 log('Ready. Load a scanned map to begin.');
 
 // Handle for tests and for debugging in the browser console.
-window.amano = { state: S, viewer, batch: B, batchRun, basemap, setView, AI, loadFile, autoGeoref, readLegendAI, extract, refit, setCRS, runDetect, exporters, version: VERSION };
+window.amano = { state: S, viewer, Account, saveHistoryNow, batch: B, batchRun, basemap, setView, AI, loadFile, autoGeoref, readLegendAI, extract, refit, setCRS, runDetect, exporters, version: VERSION };
