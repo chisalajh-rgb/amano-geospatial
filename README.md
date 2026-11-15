@@ -20,6 +20,31 @@ It is a plain static site: no build step, no dependencies. Whatever is on the
 | `docs/DEPLOY.md` | Step-by-step: hosting, domain, DNS, email |
 | `.nojekyll` | Tells GitHub Pages to serve the files as they are |
 
+## The app (`app/`)
+
+The Amano Georeferencer (beta) runs entirely in the browser at `/app/`:
+
+- **Georeference:** finds the grid lines on a scan, reads the margin labels and stated datum with AI
+  (or you type the first line's value and the spacing), fits the map and reports the error.
+- **Digitize:** reads the legend with AI or takes colours you pick, and traces the units as polygons;
+  magic wand, polygon, line and point tools for the rest.
+- **Export:** GeoTIFF, Shapefile, GeoJSON, QGIS control points, world file and an audit log.
+
+AI steps need either the user's own Anthropic API key (entered in the app's Settings, kept in their
+browser) or the optional server in `proxy/`. Never commit an API key.
+
+| Path | What it is |
+| --- | --- |
+| `app/js/` | The engine: `grid.js` (line detection), `georef.js` (fitting), `ai.js`, `digitize.js`, `tiff.js`, `vector.js` … |
+| `app/vendor/` | Third-party libraries (proj4js, UTIF.js, pako) with their licences |
+| `app/sample/` | A synthetic sample map (invented geology) |
+| `proxy/` | Optional AI server (Cloudflare Worker) |
+| `tools/` | Scripts that generate the sample map and the coordinate-system list |
+| `tests/` | Engine tests (`node tests/test_*.mjs`) and a browser test (`python3 tests/e2e_app.py`) |
+
+**Tested so far:** on the sample map only, with the AI replaced by a stand-in. The AI prompts have
+not yet been run against the live model or on real scans.
+
 ## Preview on your own computer
 
 ```bash
@@ -50,6 +75,8 @@ rsvg-convert -w 512 -h 512 assets/logo-icon.svg -o assets/icon-512.png
 ## Launch checklist
 
 - [x] Landing page, logo, favicon, social preview, SEO tags
+- [x] Georeferencer app (beta) at `/app/`
+- [ ] AI steps tested on real maps with a live API key
 - [x] Temporary contact email in place (`chisala.jh@gmail.com`)
 - [ ] Copy approved
 - [ ] Contact email switched to an address on the domain

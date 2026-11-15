@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amano Georeferencer (beta) — Amano Geospatial</title>
+<meta name="description" content="Georeference and digitize scanned maps in your browser. Beta.">
+<meta name="theme-color" content="#0d2a54">
+<link rel="icon" href="../assets/favicon.ico" sizes="48x48">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<header class="top">
+  <a class="brand" href="../" title="Back to amanogeospatial.com">
+    <img src="../assets/logo-icon.svg" alt="" width="30" height="30">
+    <span class="wm"><b>Amano</b><span>GEOSPATIAL</span></span>
+  </a>
+  <span class="product">Georeferencer <i>beta</i></span>
+  <span class="grow"></span>
+  <button class="chip" id="ai-chip" type="button" title="AI connection">AI: not connected</button>
+  <button class="btn quiet" id="btn-settings" type="button">Settings</button>
+</header>
+
+<div class="layout">
+  <aside class="panel" id="panel">
+
+    <section class="step" id="s-map">
+      <h2><span class="n">1</span> Map</h2>
+      <div class="body">
+        <label class="drop" id="drop">
+          <input type="file" id="file" accept=".png,.jpg,.jpeg,.webp,.tif,.tiff,.bmp,.gif,image/*">
+          <b>Choose a scanned map</b>
+          <span>or drop it here. PNG, JPEG, WebP or TIFF.</span>
+        </label>
+        <button class="btn line wide" id="btn-sample" type="button">Load the sample map</button>
+        <p class="hint" id="file-info">Your map stays in this browser. Nothing is uploaded unless you run an AI step.</p>
+      </div>
+    </section>
+
+    <section class="step" id="s-georef">
+      <h2><span class="n">2</span> Georeference</h2>
+      <div class="body">
+        <button class="btn primary wide" id="btn-auto" type="button" disabled>Auto-georeference with AI</button>
+        <p class="hint">Reads the grid labels and the stated datum, finds the grid lines, and fits the map.</p>
+
+        <details id="assist">
+          <summary>Grid assist (no AI needed)</summary>
+          <p class="hint">Finds the grid lines for you. You type the value of the first line and the spacing.</p>
+          <button class="btn line wide" id="btn-detect" type="button" disabled>Detect grid lines</button>
+          <div class="grid2" id="assist-form" hidden>
+            <label>Leftmost line (X)<input type="number" id="as-e0" step="any" placeholder="e.g. 360000"></label>
+            <label>X spacing<input type="number" id="as-de" step="any" placeholder="e.g. 1000"></label>
+            <label>Top line (Y)<input type="number" id="as-n0" step="any" placeholder="e.g. 8646000"></label>
+            <label>Y spacing<input type="number" id="as-dn" step="any" placeholder="e.g. 1000"></label>
+            <button class="btn line wide span2" id="btn-assist" type="button">Apply values to the grid</button>
+          </div>
+        </details>
+
+        <label class="field">Coordinate system of the map's labels
+          <input type="text" id="crs" list="crs-list" placeholder="Search: 35S, Arc 1950, Katanga, or an EPSG code" autocomplete="off" disabled>
+          <datalist id="crs-list"></datalist>
+        </label>
+        <p class="hint" id="crs-note">Leave empty for a local mine grid.</p>
+
+        <label class="field">Transform
+          <select id="transform" disabled>
+            <option value="auto">Automatic</option>
+            <option value="similarity">Shift, scale, rotate (2+ points)</option>
+            <option value="affine">Affine (3+ points)</option>
+            <option value="poly2">Polynomial 2 (6+ points, for warped sheets)</option>
+          </select>
+        </label>
+
+        <div class="fit" id="fit" hidden></div>
+
+        <div class="row">
+          <button class="btn line tool" id="tool-gcp" data-tool="gcp" type="button" disabled>Add control point</button>
+          <button class="btn quiet" id="btn-clear-gcps" type="button" disabled>Clear all</button>
+        </div>
+        <div class="tablewrap" id="gcp-wrap" hidden>
+          <table class="gcps">
+            <thead><tr><th>#</th><th>X / Easting</th><th>Y / Northing</th><th title="Error in scan pixels">Err px</th><th>Use</th><th></th></tr></thead>
+            <tbody id="gcp-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="step" id="s-digit">
+      <h2><span class="n">3</span> Digitize</h2>
+      <div class="body">
+        <button class="btn primary wide" id="btn-legend" type="button" disabled>Read the legend with AI</button>
+        <div class="row">
+          <button class="btn line tool" id="tool-pick" data-tool="pick" type="button" disabled>Pick a unit colour</button>
+          <button class="btn quiet" id="btn-clear-units" type="button" disabled>Clear units</button>
+        </div>
+        <div id="units" class="units"></div>
+
+        <label class="field range">Colour match <output id="o-tol">16</output>
+          <input type="range" id="r-tol" min="6" max="40" value="16" disabled>
+        </label>
+        <label class="field range">Outline detail <output id="o-detail">Normal</output>
+          <input type="range" id="r-detail" min="1" max="5" value="3" disabled>
+        </label>
+        <button class="btn primary wide" id="btn-extract" type="button" disabled>Extract polygons</button>
+
+        <h3>Draw by hand</h3>
+        <label class="field">Name or code for new features
+          <input type="text" id="attr" placeholder="e.g. Fault, SD-006, Kd" disabled>
+        </label>
+        <div class="tools">
+          <button class="btn line tool" data-tool="wand" type="button" disabled title="Click a coloured area to outline it">Magic wand</button>
+          <button class="btn line tool" data-tool="polygon" type="button" disabled>Polygon</button>
+          <button class="btn line tool" data-tool="line" type="button" disabled>Line</button>
+          <button class="btn line tool" data-tool="point" type="button" disabled>Point</button>
+          <button class="btn line tool" data-tool="erase" type="button" disabled title="Click a feature to delete it">Delete</button>
+        </div>
+        <p class="hint" id="draw-hint">Click to add corners. Double-click or press Enter to finish, Esc to cancel.</p>
+        <div id="feat-summary" class="summary"></div>
+        <button class="btn quiet" id="btn-clear-feats" type="button" disabled>Remove all features</button>
+      </div>
+    </section>
+
+    <section class="step" id="s-export">
+      <h2><span class="n">4</span> Export</h2>
+      <div class="body">
+        <button class="btn primary wide" id="ex-all" type="button" disabled>Download everything (.zip)</button>
+        <div class="exports">
+          <button class="btn line" id="ex-tif" type="button" disabled>GeoTIFF</button>
+          <button class="btn line" id="ex-shp" type="button" disabled>Shapefile</button>
+          <button class="btn line" id="ex-geojson" type="button" disabled>GeoJSON</button>
+          <button class="btn line" id="ex-points" type="button" disabled>Control points</button>
+          <button class="btn line" id="ex-world" type="button" disabled>World file</button>
+          <button class="btn line" id="ex-audit" type="button" disabled>Audit log</button>
+        </div>
+        <p class="hint" id="export-note">Georeference the map first.</p>
+      </div>
+    </section>
+
+    <section class="step" id="s-log">
+      <h2>Activity</h2>
+      <ol class="log" id="log"></ol>
+    </section>
+
+    <p class="foot">Beta. Check results before relying on them. <a href="../">amanogeospatial.com</a></p>
+  </aside>
+
+  <main class="stage" id="stage">
+    <canvas id="view"></canvas>
+    <div class="toolbar" id="toolbar" hidden>
+      <button class="tb tool on" data-tool="pan" type="button" title="Pan and zoom">Pan</button>
+      <button class="tb" id="tb-fit" type="button" title="Show the whole map">Fit</button>
+      <button class="tb" id="tb-in" type="button" title="Zoom in">+</button>
+      <button class="tb" id="tb-out" type="button" title="Zoom out">−</button>
+      <span class="sep"></span>
+      <label class="tb check"><input type="checkbox" id="show-grid" checked> Grid</label>
+      <label class="tb check"><input type="checkbox" id="show-gcps" checked> Points</label>
+      <label class="tb check"><input type="checkbox" id="show-feats" checked> Features</label>
+    </div>
+    <div class="status" id="status" hidden></div>
+    <div class="empty" id="empty">
+      <img src="../assets/logo-icon.svg" alt="" width="72" height="72">
+      <h1>Georeference and digitize a scanned map</h1>
+      <p>Load a scan on the left, or try the sample map. The result is a GeoTIFF and vector layers you can open in QGIS, ArcGIS or Leapfrog.</p>
+    </div>
+    <div class="busy" id="busy" hidden><div class="card"><div class="spin"></div><p id="busy-text">Working…</p><div class="bar"><i id="busy-bar"></i></div></div></div>
+    <div class="toast" id="toast" hidden></div>
+  </main>
+</div>
+
+<dialog id="settings">
+  <form method="dialog" class="dlg">
+    <h2>AI connection</h2>
+    <p>The automatic steps use Anthropic's Claude to read the map. When you run one, parts of your map image are sent to the AI service. Everything else runs in this browser.</p>
+    <label class="radio"><input type="radio" name="mode" value="key"> <span><b>My own API key</b><br><small>Kept in this browser only and sent only to Anthropic. You pay Anthropic for what you use.</small></span></label>
+    <label class="field">Anthropic API key
+      <input type="password" id="set-key" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
+    </label>
+    <label class="radio"><input type="radio" name="mode" value="proxy"> <span><b>Amano server</b><br><small>A server address given to you by Amano Geospatial. No key needed.</small></span></label>
+    <label class="field">Server address
+      <input type="url" id="set-proxy" placeholder="https://…">
+    </label>
+    <label class="field">Access code (if you were given one)
+      <input type="text" id="set-code" autocomplete="off">
+    </label>
+    <label class="field">Model
+      <select id="set-model"></select>
+    </label>
+    <div class="dlg-actions">
+      <button class="btn quiet" id="set-forget" type="button">Forget key</button>
+      <span class="grow"></span>
+      <button class="btn line" value="cancel">Cancel</button>
+      <button class="btn primary" id="set-save" value="save">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="config.js"></script>
+<script src="vendor/proj4.js"></script>
+<script src="vendor/pako_inflate.min.js"></script>
+<script src="vendor/UTIF.js"></script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
