@@ -11,6 +11,7 @@ export class Basemap {
     this.ok = !!L;
     if (!this.ok) return;
     this.map = L.map(el, { zoomControl: false, attributionControl: true, worldCopyJump: true }).setView([-12.6, 27.6], 6);
+    this.map.attributionControl.setPrefix(false); // no library credit; the map-data credit below is a licence condition
     L.control.zoom({ position: 'bottomright' }).addTo(this.map);
     L.control.scale({ imperial: false, position: 'bottomright' }).addTo(this.map);
     L.tileLayer(TILE_URL, { maxZoom: 19, attribution: ATTRIBUTION }).addTo(this.map);
