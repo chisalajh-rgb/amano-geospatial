@@ -25,7 +25,7 @@ export default {
     const fail = (status, message) => new Response(JSON.stringify({ error: { message } }), { status, headers: { ...cors, 'content-type': 'application/json' } });
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     if (request.method !== 'POST') return fail(405, 'Use POST.');
-    if (!okOrigin) return fail(403, 'This site is not allowed to use the Amano AI server.');
+    if (!okOrigin) return fail(403, 'This site is not allowed to use the Amano server.');
     if (env.ACCESS_CODE && request.headers.get('x-amano-access') !== env.ACCESS_CODE) return fail(401, 'Access code missing or wrong.');
     if (!env.ANTHROPIC_API_KEY) return fail(500, 'The server has no API key configured.');
     const raw = await request.text();

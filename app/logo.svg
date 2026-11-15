@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Amano Geospatial">
+  <defs>
+    <linearGradient id="cb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3f6b55"/><stop offset="1" stop-color="#24382f"/></linearGradient>
+    <linearGradient id="am" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d99a5b"/><stop offset="1" stop-color="#b4612f"/></linearGradient>
+  </defs>
+  <circle cx="64" cy="64" r="57" fill="#ffffff"/>
+  <circle cx="64" cy="64" r="57" fill="none" stroke="url(#cb)" stroke-width="6"/>
+  <circle cx="103.6" cy="103.6" r="3" fill="#3f6b55"/><circle cx="24.4" cy="103.6" r="3" fill="#3f6b55"/>
+  <circle cx="103.6" cy="24.4" r="3" fill="#3f6b55"/><circle cx="24.4" cy="24.4" r="3" fill="#3f6b55"/>
+  <path d="M26 92 Q64 78 102 92" fill="none" stroke="#3f6b55" stroke-width="2" opacity="0.18"/>
+  <path d="M34 100 Q64 88 94 100" fill="none" stroke="#3f6b55" stroke-width="2" opacity="0.18"/>
+  <polygon points="64,22 46,64 82,64" fill="url(#am)"/>
+  <polygon points="46,64 82,64 64,106" fill="url(#cb)"/>
+  <circle cx="64" cy="64" r="4.5" fill="#24382f"/><circle cx="64" cy="64" r="1.8" fill="#d99a5b"/>
+  <path d="M64 6 L66.4 16 L64 22 L61.6 16 Z" fill="url(#am)"/>
+  <path d="M56 12 L64 15.5 L72 12 L64 18.5 Z" fill="url(#am)" opacity="0.9"/>
+</svg>

@@ -72,7 +72,7 @@ function refreshEnabled() {
   $('export-note').textContent = !has ? 'Load a map first.' : !geo ? 'Georeference the map first.'
     : `Ready. ${S.crs ? crsLabel(S.crs) : 'No coordinate system set: files will carry coordinates but no CRS.'}`;
   const s = AI.getSettings(), on = AI.aiReady();
-  $('ai-chip').textContent = on ? `AI: connected (${s.mode === 'proxy' ? 'Amano server' : 'own key'})` : 'AI: not connected';
+  $('ai-chip').textContent = on ? 'Auto: connected' : 'Auto: not connected';
   $('ai-chip').classList.toggle('on', on);
 }
 
@@ -110,7 +110,7 @@ async function syncBasemap(zoom = false) {
   if (!S.src || !f) { basemap.clear(); basemapStamp = ''; return; }
   const placed = await basemap.setScan(S.src, f);
   if (!placed) { basemap.clear(); basemapStamp = ''; return; }
-  basemap.setFeatures(S.features.length ? JSON.parse(geojsonText()) : null, (code) => { const u = unitFor(code); return u ? css(u.rgb) : '#e8933b'; });
+  basemap.setFeatures(S.features.length ? JSON.parse(geojsonText()) : null, (code) => { const u = unitFor(code); return u ? css(u.rgb) : '#b4612f'; });
   const stamp = S.src.name + '|' + S.crs.code;
   if (zoom || stamp !== basemapStamp) basemap.fit();
   basemapStamp = stamp;
@@ -298,7 +298,7 @@ async function autoGeorefCore({ quiet = false } = {}) {
     S.aiCrsConfidence = null;
     const haveLines = S.grid ? S.grid.vertical.length >= 2 && S.grid.horizontal.length >= 2 : runDetect();
 
-    progress('Reading the sheet with AI…', 0.15);
+    progress('Reading the sheet…', 0.15);
     const [ow, oh] = AI.fitForVision(W, H);
     const overview = { b64: await cropToJpeg(S.src, { x0: 0, y0: 0, w: W, h: H }, ow, oh, 0.88), width: ow, height: oh };
     const a = await AI.analyzeSheet(overview);
@@ -306,9 +306,9 @@ async function autoGeorefCore({ quiet = false } = {}) {
     const sc = (b) => (b ? { x0: b.x0 * k, y0: b.y0 * k, x1: b.x1 * k, y1: b.y1 * k } : null);
     S.ai = { ...a, neatline: sc(a.neatline), legend: sc(a.legend), model: AI.getSettings().model };
     S.legendBox = S.ai.legend;
-    log(`AI read the sheet${a.title ? `: “${a.title}”` : ''}${a.scaleDenominator ? `, scale 1:${a.scaleDenominator.toLocaleString('en-US')}` : ''}. Grid drawn as ${a.grid.drawnAs}; labels are ${a.grid.labelKind}.`);
+    log(`Read the sheet${a.title ? `: “${a.title}”` : ''}${a.scaleDenominator ? `, scale 1:${a.scaleDenominator.toLocaleString('en-US')}` : ''}. Grid drawn as ${a.grid.drawnAs}; labels are ${a.grid.labelKind}.`);
     if (a.crs.statedText) log(`Stated on the sheet: “${a.crs.statedText}”`);
-    if (a.notes) log(`AI note: ${a.notes}`, 'warn');
+    if (a.notes) log(`Note from the reading: ${a.notes}`, 'warn');
 
     const frame = (haveLines && S.frame) || S.ai.neatline;
     if (!frame) throw new Error('The map frame could not be found. Add control points by hand instead.');
@@ -327,7 +327,7 @@ async function autoGeorefCore({ quiet = false } = {}) {
     S.aiLabels = axes;
     const projected = axes.easting.length >= 2 && axes.northing.length >= 2 && a.grid.labelKind !== 'geographic';
     const xs = projected ? axes.easting : axes.longitude, ys = projected ? axes.northing : axes.latitude;
-    log(`AI read ${xs.length} ${projected ? 'easting' : 'longitude'} and ${ys.length} ${projected ? 'northing' : 'latitude'} labels from the margins.`);
+    log(`Read ${xs.length} ${projected ? 'easting' : 'longitude'} and ${ys.length} ${projected ? 'northing' : 'latitude'} labels from the margins.`);
     if (xs.length < 2 || ys.length < 2) throw new Error('Too few coordinate labels could be read from the margins. Use grid assist or add control points by hand.');
 
     progress('Fitting the map…', 0.8);
@@ -356,12 +356,12 @@ async function autoGeorefCore({ quiet = false } = {}) {
       $('crs').value = `${chosen.crs.code} — ${chosen.crs.name}`;
       const pct = Math.round(chosen.c.confidence * 100);
       S.aiCrsConfidence = chosen.c.confidence;
-      $('crs-note').textContent = `Suggested by AI (${pct}% confident): ${chosen.c.why}`;
+      $('crs-note').textContent = `Read from the sheet (${pct}% confident): ${chosen.c.why}`;
       $('crs-note').className = 'hint' + (chosen.c.confidence < 0.6 ? ' warn' : '');
       log(`Coordinate system set to ${crsLabel(chosen.crs)} (${pct}% confident). ${chosen.c.why}`, chosen.c.confidence < 0.6 ? 'warn' : '');
     } else {
       S.crs = null; $('crs').value = '';
-      $('crs-note').textContent = 'The AI could not determine the coordinate system. Choose it here.'; $('crs-note').className = 'hint warn';
+      $('crs-note').textContent = 'The coordinate system could not be read from the sheet. Choose it here.'; $('crs-note').className = 'hint warn';
       log('The coordinate system could not be determined from the sheet. Choose it in the Georeference panel.', 'warn');
     }
     setGcps(gcps);
@@ -371,11 +371,11 @@ async function autoGeorefCore({ quiet = false } = {}) {
       const w = crsCheck(); if (w) log(w, 'bad');
       if (!quiet) toast(m.rmsPx <= 1.5 ? 'Georeferenced. Check the points, then export.' : 'Georeferenced, but the fit is loose. Check the control points.', m.rmsPx <= 1.5 ? 'good' : '');
     }
-    log(`AI usage so far: ${AI.usage.calls} requests, ${AI.usage.inputTokens.toLocaleString('en-US')} input and ${AI.usage.outputTokens.toLocaleString('en-US')} output tokens.`);
+    log(`Automatic reading: ${AI.usage.calls} requests so far this session.`);
   }
 }
 async function autoGeoref() {
-  if (!AI.aiReady()) { openSettings(); toast('Connect the AI first: add your API key or the Amano server address.'); return; }
+  if (!AI.aiReady()) { openSettings(); toast('Set up the connection first: this step uses the automatic reading.'); return; }
   await busy('Looking for grid lines…', () => autoGeorefCore());
 }
 
@@ -435,14 +435,14 @@ function renderFeatures() {
   head.style.fontWeight = '600'; el.append(head);
   for (const [code, c] of per) {
     const d = document.createElement('div'); d.className = 'u';
-    const i = document.createElement('i'); const u = unitFor(code); i.style.background = u ? css(u.rgb) : '#e8933b';
+    const i = document.createElement('i'); const u = unitFor(code); i.style.background = u ? css(u.rgb) : '#b4612f';
     d.append(i, document.createTextNode(`${code}${u?.name ? ' · ' + u.name : ''}: ${c}`)); el.append(d);
   }
 }
 
 async function readLegendAI() {
-  if (!AI.aiReady()) { openSettings(); toast('Connect the AI first: add your API key or the Amano server address.'); return; }
-  await busy('Reading the legend with AI…', async () => {
+  if (!AI.aiReady()) { openSettings(); toast('Set up the connection first: this step uses the automatic reading.'); return; }
+  await busy('Reading the legend…', async () => {
     const { width: W, height: H } = S.src;
     if (!S.legendBox) {
       const [ow, oh] = AI.fitForVision(W, H);
@@ -469,7 +469,7 @@ async function readLegendAI() {
       addUnit(e.code || `U${S.units.length + 1}`, e.name, rgb); S.units[S.units.length - 1].swatch = sw; added++;
     }
     const others = entries.filter((e) => e.kind !== 'area').map((e) => e.name || e.code);
-    log(`AI read ${entries.length} legend entries; ${added} colour units added.${others.length ? ` Line and point symbols (${others.join(', ')}) are not extracted automatically yet: draw them by hand.` : ''}`, added ? 'good' : 'warn');
+    log(`Read ${entries.length} legend entries; ${added} colour units added.${others.length ? ` Line and point symbols (${others.join(', ')}) are not extracted automatically yet: draw them by hand.` : ''}`, added ? 'good' : 'warn');
     if (!added) throw new Error('The legend was read but no colour boxes could be sampled. Use “Pick a unit colour” instead.');
     renderUnits(); refreshEnabled(); viewer.requestDraw();
   });
@@ -590,37 +590,37 @@ viewer.onDraw = (ctx, v) => {
   if ($('show-feats').checked) {
     for (const f of S.features) {
       const u = unitFor(f.props.code);
-      const rgb = u ? u.rgb : [232, 147, 59];
+      const rgb = u ? u.rgb : [180, 97, 47];
       if (f.type === 'polygon') {
         ctx.beginPath();
         for (const ring of f.coords) { ring.forEach((p, i) => { const [sx, sy] = P(p[0], p[1]); if (i) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); }); ctx.closePath(); }
         ctx.fillStyle = css(rgb, 0.38); ctx.fill('evenodd');
-        ctx.lineWidth = 1.6; ctx.strokeStyle = 'rgba(13,42,84,.95)'; ctx.stroke();
+        ctx.lineWidth = 1.6; ctx.strokeStyle = 'rgba(36,56,47,.95)'; ctx.stroke();
       } else if (f.type === 'line') {
         ctx.beginPath(); f.coords.forEach((p, i) => { const [sx, sy] = P(p[0], p[1]); if (i) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); });
-        ctx.lineWidth = 3; ctx.strokeStyle = '#c2413a'; ctx.stroke();
+        ctx.lineWidth = 3; ctx.strokeStyle = '#a8402f'; ctx.stroke();
       } else {
         const [sx, sy] = P(f.coords[0], f.coords[1]);
-        ctx.beginPath(); ctx.arc(sx, sy, 5.5, 0, 7); ctx.fillStyle = '#c2413a'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
-        if (f.props.code) { ctx.font = '600 12px Segoe UI, Inter, sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.strokeText(f.props.code, sx + 9, sy + 4); ctx.fillStyle = '#0c1726'; ctx.fillText(f.props.code, sx + 9, sy + 4); }
+        ctx.beginPath(); ctx.arc(sx, sy, 5.5, 0, 7); ctx.fillStyle = '#a8402f'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+        if (f.props.code) { ctx.font = '600 12px Segoe UI, Inter, sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.strokeText(f.props.code, sx + 9, sy + 4); ctx.fillStyle = '#1d241f'; ctx.fillText(f.props.code, sx + 9, sy + 4); }
       }
     }
-    for (const u of S.units) if (u.swatch) { const [x0, y0] = P(u.swatch.x0, u.swatch.y0), [x1, y1] = P(u.swatch.x1, u.swatch.y1); ctx.setLineDash([4, 3]); ctx.lineWidth = 1.5; ctx.strokeStyle = '#0d2a54'; ctx.strokeRect(x0, y0, x1 - x0, y1 - y0); ctx.setLineDash([]); }
+    for (const u of S.units) if (u.swatch) { const [x0, y0] = P(u.swatch.x0, u.swatch.y0), [x1, y1] = P(u.swatch.x1, u.swatch.y1); ctx.setLineDash([4, 3]); ctx.lineWidth = 1.5; ctx.strokeStyle = '#24382f'; ctx.strokeRect(x0, y0, x1 - x0, y1 - y0); ctx.setLineDash([]); }
   }
   // grid lines
   if ($('show-grid').checked && S.grid) {
     const fr = S.frame || { x0: 0, y0: 0, x1: W, y1: H };
     ctx.lineWidth = 1.5; ctx.font = '600 11px Segoe UI, Inter, sans-serif';
-    const lab = (txt, sx, sy) => { const w = ctx.measureText(txt).width + 8; ctx.fillStyle = 'rgba(13,42,84,.9)'; ctx.fillRect(sx - w / 2, sy - 8, w, 16); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, sx, sy); ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic'; };
+    const lab = (txt, sx, sy) => { const w = ctx.measureText(txt).width + 8; ctx.fillStyle = 'rgba(36,56,47,.9)'; ctx.fillRect(sx - w / 2, sy - 8, w, 16); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, sx, sy); ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic'; };
     for (const l of S.grid.vertical) {
       const a = P(l.a + l.b * fr.y0, fr.y0), b = P(l.a + l.b * fr.y1, fr.y1);
-      ctx.strokeStyle = l.value !== undefined ? 'rgba(232,147,59,.95)' : 'rgba(29,78,143,.8)';
+      ctx.strokeStyle = l.value !== undefined ? 'rgba(180,97,47,.95)' : 'rgba(63,107,85,.8)';
       ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
       if (l.value !== undefined && v.scale * S.grid.spacingV > 46) lab(String(l.value), a[0], a[1] - 11);
     }
     for (const l of S.grid.horizontal) {
       const a = P(fr.x0, l.a + l.b * fr.x0), b = P(fr.x1, l.a + l.b * fr.x1);
-      ctx.strokeStyle = l.value !== undefined ? 'rgba(232,147,59,.95)' : 'rgba(29,78,143,.8)';
+      ctx.strokeStyle = l.value !== undefined ? 'rgba(180,97,47,.95)' : 'rgba(63,107,85,.8)';
       ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
       if (l.value !== undefined && v.scale * S.grid.spacingH > 24) lab(String(l.value), a[0] - 34, a[1]);
     }
@@ -630,11 +630,11 @@ viewer.onDraw = (ctx, v) => {
     for (const g of S.gcps) {
       const [sx, sy] = P(g.px, g.py);
       if (sx < -20 || sy < -20 || sx > v.cw + 20 || sy > v.ch + 20) continue;
-      const col = g.enabled === false ? '#8894a8' : g.rejected ? '#c2413a' : !isFinite(g.mx) || !isFinite(g.my) ? '#b7791f' : '#1f8a5b';
+      const col = g.enabled === false ? '#8c8f86' : g.rejected ? '#a8402f' : !isFinite(g.mx) || !isFinite(g.my) ? '#a8741a' : '#3d7a4f';
       ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.fillStyle = col;
       ctx.beginPath(); ctx.arc(sx, sy, g.id === S.hover ? 8 : 5.5, 0, 7); ctx.fill(); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(sx - 10, sy); ctx.lineTo(sx + 10, sy); ctx.moveTo(sx, sy - 10); ctx.lineTo(sx, sy + 10); ctx.lineWidth = 1; ctx.strokeStyle = col; ctx.stroke();
-      if (v.scale > 0.35 || S.gcps.length < 20) { ctx.font = '600 11px Segoe UI, Inter, sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.strokeText(g.id, sx + 8, sy - 8); ctx.fillStyle = '#0c1726'; ctx.fillText(g.id, sx + 8, sy - 8); }
+      if (v.scale > 0.35 || S.gcps.length < 20) { ctx.font = '600 11px Segoe UI, Inter, sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.strokeText(g.id, sx + 8, sy - 8); ctx.fillStyle = '#1d241f'; ctx.fillText(g.id, sx + 8, sy - 8); }
     }
   }
   // drawing in progress
@@ -642,8 +642,8 @@ viewer.onDraw = (ctx, v) => {
     ctx.beginPath();
     S.draft.pts.forEach((p, i) => { const [sx, sy] = P(p[0], p[1]); if (i) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); });
     if (S.cursor) { const [sx, sy] = P(S.cursor[0], S.cursor[1]); ctx.lineTo(sx, sy); }
-    ctx.lineWidth = 2; ctx.strokeStyle = '#e8933b'; ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]);
-    for (const p of S.draft.pts) { const [sx, sy] = P(p[0], p[1]); ctx.fillStyle = '#fff'; ctx.strokeStyle = '#e8933b'; ctx.beginPath(); ctx.arc(sx, sy, 4, 0, 7); ctx.fill(); ctx.stroke(); }
+    ctx.lineWidth = 2; ctx.strokeStyle = '#b4612f'; ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]);
+    for (const p of S.draft.pts) { const [sx, sy] = P(p[0], p[1]); ctx.fillStyle = '#fff'; ctx.strokeStyle = '#b4612f'; ctx.beginPath(); ctx.arc(sx, sy, 4, 0, 7); ctx.fill(); ctx.stroke(); }
   }
 };
 
@@ -712,7 +712,7 @@ function auditObject() {
     crs: S.crs ? { epsg: S.crs.code, name: S.crs.name, proj4: S.crs.proj4 } : null,
     transform: m ? { type: m.type, pointsUsed: m.n, rmsMapUnits: m.rms, rmsPixels: m.rmsPx, pixelSize: m.resolution, rotationDeg: m.rotationDeg, affine: m.affine } : null,
     controlPoints: S.gcps.map((g) => { const r = m?.residuals.get(g.id); return { id: g.id, pixelX: g.px, pixelY: g.py, mapX: g.mx, mapY: g.my, used: g.enabled !== false && !g.rejected, setAside: !!g.rejected, source: g.source, errorPixels: r ? r.errPx : null }; }),
-    ai: S.ai ? { model: S.ai.model, title: S.ai.title, scaleDenominator: S.ai.scaleDenominator, statedText: S.ai.crs?.statedText, crsCandidates: S.ai.crs?.candidates, grid: S.ai.grid, notes: S.ai.notes, usage: { ...AI.usage } } : null,
+    recognition: S.ai ? { title: S.ai.title, scaleDenominator: S.ai.scaleDenominator, statedText: S.ai.crs?.statedText, crsCandidates: S.ai.crs?.candidates, grid: S.ai.grid, notes: S.ai.notes, requests: AI.usage.calls } : null,
     units: S.units.map((u) => ({ code: u.code, name: u.name, rgb: u.rgb })),
     features: { polygons: S.features.filter((f) => f.type === 'polygon').length, lines: S.features.filter((f) => f.type === 'line').length, points: S.features.filter((f) => f.type === 'point').length },
     activity: S.log,
@@ -802,7 +802,7 @@ function batchVerdict() {
 
 async function batchRun() {
   if (B.running) return;
-  if (!AI.aiReady()) { $('batch').close(); openSettings(); toast('Batch mode uses the AI. Add your API key or the Amano server address first.'); return; }
+  if (!AI.aiReady()) { $('batch').close(); openSettings(); toast('Batch mode needs the automatic reading. Set up the connection first.'); return; }
   const crsText = $('batch-crs').value.trim(), cm = crsText.match(/^(?:epsg:)?\s*(\d{4,6})/i);
   B.fixedCrs = null;
   if (crsText) {
@@ -825,7 +825,7 @@ async function batchRun() {
         stage('Opening…');
         await new Promise((r) => setTimeout(r, 30));
         await loadFileCore(B.files[i]);
-        stage('Reading with AI…');
+        stage('Reading the sheet…');
         await autoGeorefCore({ quiet: true });
         if (B.fixedCrs) { S.crs = B.fixedCrs; $('crs').value = `${S.crs.code} — ${S.crs.name}`; refit(); }
         const v = batchVerdict();

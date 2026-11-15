@@ -7,9 +7,9 @@
 //   - "proxy": an Amano server endpoint (see /proxy) that holds the key, so visitors need none
 
 export const MODELS = [
-  { id: 'claude-sonnet-5-5', label: 'Claude Sonnet 5.5 (recommended)' },
-  { id: 'claude-opus-5-5', label: 'Claude Opus 5.5 (most careful, costs more)' },
-  { id: 'claude-haiku-5-5', label: 'Claude Haiku 5.5 (fastest, cheapest)' },
+  { id: 'claude-sonnet-5-5', label: 'Standard (recommended)' },
+  { id: 'claude-opus-5-5', label: 'Most careful (slower)' },
+  { id: 'claude-haiku-5-5', label: 'Fastest' },
 ];
 
 const STORE = 'amano.ai.v1';
@@ -53,15 +53,15 @@ async function defaultTransport(body) {
   try {
     res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
   } catch (e) {
-    throw new Error('Could not reach the AI service. Check your internet connection' + (s.mode === 'proxy' ? ' and the server address in Settings.' : '.'));
+    throw new Error('Could not reach the recognition service. Check your internet connection' + (s.mode === 'proxy' ? ' and the server address in Settings.' : '.'));
   }
   let data = null;
   try { data = await res.json(); } catch { /* not JSON */ }
   if (!res.ok) {
     const msg = data?.error?.message || `HTTP ${res.status}`;
-    if (res.status === 401) throw new Error('The AI service rejected the key. Check it in Settings. (' + msg + ')');
-    if (res.status === 429) throw new Error('The AI service is rate-limiting requests. Wait a minute and try again. (' + msg + ')');
-    throw new Error('AI request failed: ' + msg);
+    if (res.status === 401) throw new Error('The recognition service rejected the key. Check it in Settings. (' + msg + ')');
+    if (res.status === 429) throw new Error('The recognition service is rate-limiting requests. Wait a minute and try again. (' + msg + ')');
+    throw new Error('The automatic reading failed: ' + msg);
   }
   return data;
 }
@@ -78,9 +78,9 @@ async function callClaude({ system, content, maxTokens = 6000 }) {
   usage.calls++;
   usage.inputTokens += data?.usage?.input_tokens || 0;
   usage.outputTokens += data?.usage?.output_tokens || 0;
-  if (data?.stop_reason === 'refusal') throw new Error('The AI declined to analyse this image.');
+  if (data?.stop_reason === 'refusal') throw new Error('The recognition service declined to read this image.');
   const text = (data?.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('\n');
-  if (!text.trim()) throw new Error('The AI returned an empty answer' + (data?.stop_reason === 'max_tokens' ? ' (it ran out of room).' : '.'));
+  if (!text.trim()) throw new Error('The recognition service returned an empty answer' + (data?.stop_reason === 'max_tokens' ? ' (it ran out of room).' : '.'));
   return extractJSON(text);
 }
 
@@ -94,7 +94,7 @@ export function extractJSON(text) {
   for (const c of candidates) {
     try { return JSON.parse(c); } catch { /* try next */ }
   }
-  throw new Error('The AI answer could not be read as structured data.');
+  throw new Error('The reading came back in a form that could not be used. Try again.');
 }
 
 // ------------------------------------------------------------------ image sizing

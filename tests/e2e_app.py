@@ -208,7 +208,7 @@ async def main():
     c0 = [f for f in gj["features"] if f["geometry"]["type"] == "Point"][0]["geometry"]["coordinates"]
     print("   GeoJSON features:", len(gj["features"]), "point lon/lat", c0); ok &= 25.6 < c0[0] < 25.9 and -12.4 < c0[1] < -12.2
     audit = json.loads(z.read([n for n in names if n.endswith("_audit.json")][0]))
-    print("   audit:", audit["crs"]["epsg"], audit["transform"]["type"], "points", len(audit["controlPoints"]), "ai model", audit["ai"]["model"], "log entries", len(audit["activity"]))
+    print("   audit:", audit["crs"]["epsg"], audit["transform"]["type"], "points", len(audit["controlPoints"]), "recognition", sorted(audit["recognition"].keys())[:3], "log entries", len(audit["activity"]))
     pts = z.read([n for n in names if n.endswith(".points")][0]).decode().splitlines(); print("   .points rows:", len(pts) - 1, "|", pts[1])
     wld = [n for n in names if n.endswith(".jgw")]; print("   world file:", z.read(wld[0]).decode().split())
     print("E2E", "PASSED" if ok else "FAILED")

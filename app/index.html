@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Amano Georeferencer (beta) — Amano Geospatial</title>
 <meta name="description" content="Georeference and digitize scanned maps in your browser. Beta.">
-<meta name="theme-color" content="#0d2a54">
+<meta name="theme-color" content="#24382f">
 <link rel="icon" href="../assets/favicon.ico" sizes="48x48">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
@@ -15,12 +15,12 @@
 
 <header class="top">
   <a class="brand" href="../" title="Back to amanogeospatial.com">
-    <img src="../assets/logo-icon.svg" alt="" width="30" height="30">
+    <img src="logo.svg" alt="" width="30" height="30">
     <span class="wm"><b>Amano</b><span>GEOSPATIAL</span></span>
   </a>
   <span class="product">Georeferencer <i>beta</i></span>
   <span class="grow"></span>
-  <button class="chip" id="ai-chip" type="button" title="AI connection">AI: not connected</button>
+  <button class="chip" id="ai-chip" type="button" title="Connection for the automatic steps">Auto: not connected</button>
   <button class="btn quiet" id="btn-settings" type="button">Settings</button>
 </header>
 
@@ -37,18 +37,18 @@
         </label>
         <button class="btn line wide" id="btn-sample" type="button">Load the sample map</button>
         <button class="btn line wide" id="btn-batch" type="button">Batch: georeference many maps</button>
-        <p class="hint" id="file-info">Your map stays in this browser. Nothing is uploaded unless you run an AI step.</p>
+        <p class="hint" id="file-info">Your map stays in this browser. Nothing leaves it unless you run an automatic step.</p>
       </div>
     </section>
 
     <section class="step" id="s-georef">
       <h2><span class="n">2</span> Georeference</h2>
       <div class="body">
-        <button class="btn primary wide" id="btn-auto" type="button" disabled>Auto-georeference with AI</button>
+        <button class="btn primary wide" id="btn-auto" type="button" disabled>Auto-georeference</button>
         <p class="hint">Reads the grid labels and the stated datum, finds the grid lines, and fits the map.</p>
 
         <details id="assist">
-          <summary>Grid assist (no AI needed)</summary>
+          <summary>Grid assist (works offline)</summary>
           <p class="hint">Finds the grid lines for you. You type the value of the first line and the spacing.</p>
           <button class="btn line wide" id="btn-detect" type="button" disabled>Detect grid lines</button>
           <div class="grid2" id="assist-form" hidden>
@@ -93,7 +93,7 @@
     <section class="step" id="s-digit">
       <h2><span class="n">3</span> Digitize</h2>
       <div class="body">
-        <button class="btn primary wide" id="btn-legend" type="button" disabled>Read the legend with AI</button>
+        <button class="btn primary wide" id="btn-legend" type="button" disabled>Read the legend automatically</button>
         <div class="row">
           <button class="btn line tool" id="tool-pick" data-tool="pick" type="button" disabled>Pick a unit colour</button>
           <button class="btn quiet" id="btn-clear-units" type="button" disabled>Clear units</button>
@@ -170,7 +170,7 @@
     </div>
     <div class="status" id="status" hidden></div>
     <div class="empty" id="empty">
-      <img src="../assets/logo-icon.svg" alt="" width="72" height="72">
+      <img src="logo.svg" alt="" width="72" height="72">
       <h1>Georeference and digitize a scanned map</h1>
       <p>Load a scan on the left, or try the sample map. Once it is georeferenced it appears here on the basemap, and exports as a GeoTIFF and vector layers for QGIS, ArcGIS or Leapfrog.</p>
     </div>
@@ -182,12 +182,12 @@
 <dialog id="batch" class="wide">
   <div class="dlg">
     <h2>Batch georeferencing</h2>
-    <p>Choose many scans. Each one is georeferenced with AI in turn and saved as a GeoTIFF with its control points and audit log. A summary table lists every map's error and flags the ones a person should check.</p>
+    <p>Choose many scans. Each one is georeferenced automatically in turn and saved as a GeoTIFF with its control points and audit log. A summary table lists every map's error and flags the ones a person should check.</p>
     <div class="batch-opts">
       <label class="drop small"><input type="file" id="batch-files" multiple accept=".png,.jpg,.jpeg,.webp,.tif,.tiff,.bmp,.gif,image/*"><b>Choose the maps</b><span>Select as many files as you like.</span></label>
       <div class="col">
         <label class="field">Coordinate system for every map (optional)
-          <input type="text" id="batch-crs" placeholder="Leave empty to let the AI read it from each sheet" autocomplete="off">
+          <input type="text" id="batch-crs" placeholder="Leave empty to read it from each sheet" autocomplete="off">
         </label>
         <label class="radio" id="batch-folder-row"><input type="checkbox" id="batch-folder" checked> <span>Save straight into a folder I choose<br><small>Otherwise each map downloads as its own zip file.</small></span></label>
       </div>
@@ -199,7 +199,7 @@
         <tbody id="batch-body"></tbody>
       </table>
     </div>
-    <p class="hint">Keep this tab open while it runs. Parts of each map image are sent to the AI service. “Check” means open that map on its own and look at the control points before trusting it.</p>
+    <p class="hint">Keep this tab open while it runs. Parts of each map image are sent to the recognition service. “Check” means open that map on its own and look at the control points before trusting it.</p>
     <div class="dlg-actions">
       <button class="btn line" id="batch-summary" type="button" disabled>Download summary (.csv)</button>
       <span class="grow"></span>
@@ -212,20 +212,20 @@
 
 <dialog id="settings">
   <form method="dialog" class="dlg">
-    <h2>AI connection</h2>
-    <p>The automatic steps use Anthropic's Claude to read the map. When you run one, parts of your map image are sent to the AI service. Everything else runs in this browser.</p>
-    <label class="radio"><input type="radio" name="mode" value="key"> <span><b>My own API key</b><br><small>Kept in this browser only and sent only to Anthropic. You pay Anthropic for what you use.</small></span></label>
-    <label class="field">Anthropic API key
-      <input type="password" id="set-key" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
-    </label>
-    <label class="radio"><input type="radio" name="mode" value="proxy"> <span><b>Amano server</b><br><small>A server address given to you by Amano Geospatial. No key needed.</small></span></label>
+    <h2>Connection</h2>
+    <p>The automatic steps read the map with an online recognition service. When you run one, parts of your map image are sent to that service for processing. Everything else runs in this browser.</p>
+    <label class="radio"><input type="radio" name="mode" value="proxy"> <span><b>Amano server</b><br><small>The address given to you by Amano Geospatial.</small></span></label>
     <label class="field">Server address
       <input type="url" id="set-proxy" placeholder="https://…">
     </label>
     <label class="field">Access code (if you were given one)
       <input type="text" id="set-code" autocomplete="off">
     </label>
-    <label class="field">Model
+    <label class="radio"><input type="radio" name="mode" value="key"> <span><b>Service key</b><br><small>For direct access with your own key. It is kept in this browser only.</small></span></label>
+    <label class="field">Service key
+      <input type="password" id="set-key" placeholder="Paste your key" autocomplete="off" spellcheck="false">
+    </label>
+    <label class="field">Reading quality
       <select id="set-model"></select>
     </label>
     <div class="dlg-actions">
