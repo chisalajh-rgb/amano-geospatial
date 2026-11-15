@@ -1,4 +1,4 @@
-// Amano Georeferencer — application wiring.
+// Amano Georeferencer, application wiring.
 import { Viewer } from './viewer.js';
 import { loadImageFile, cropToJpeg, download } from './imageio.js';
 import { toGray, detectGrid, assignValues } from './grid.js';
@@ -279,7 +279,7 @@ async function setCRS(code, why = '') {
   if (!crs) { note.textContent = `Looking up EPSG:${code}…`; crs = await resolveCRS(code); }
   if (!crs) { note.textContent = `EPSG:${code} could not be found. Check the number or your connection.`; note.className = 'hint bad'; return false; }
   S.crs = crs;
-  $('crs').value = `${crs.code} — ${crs.name}`;
+  $('crs').value = `${crs.code}, ${crs.name}`;
   note.textContent = why || `Units: ${crs.unit}.`; note.className = 'hint';
   refit();
   return true;
@@ -355,7 +355,7 @@ async function autoGeorefCore({ quiet = false } = {}) {
     }
     if (chosen) {
       S.crs = chosen.crs;
-      $('crs').value = `${chosen.crs.code} — ${chosen.crs.name}`;
+      $('crs').value = `${chosen.crs.code}, ${chosen.crs.name}`;
       const pct = Math.round(chosen.c.confidence * 100);
       S.aiCrsConfidence = chosen.c.confidence;
       $('crs-note').textContent = `Read from the sheet (${pct}% confident): ${chosen.c.why}`;
@@ -832,7 +832,7 @@ async function batchRun() {
         await loadFileCore(B.files[i]);
         stage('Reading the sheet…');
         await autoGeorefCore({ quiet: true });
-        if (B.fixedCrs) { S.crs = B.fixedCrs; $('crs').value = `${S.crs.code} — ${S.crs.name}`; refit(); }
+        if (B.fixedCrs) { S.crs = B.fixedCrs; $('crs').value = `${S.crs.code}, ${S.crs.name}`; refit(); }
         const v = batchVerdict();
         const m = S.model;
         let output = '';
@@ -1106,7 +1106,7 @@ window.addEventListener('keydown', (e) => {
   $('batch-crs').setAttribute('list', 'crs-list');
   const first = [20935, 20934, 20936, 32735, 32734, 32736, 3988, 3989, 3991, 3987, 4209, 4326];
   const list = allCRS().slice().sort((a, b) => (first.indexOf(a.code) === -1 ? 99 : first.indexOf(a.code)) - (first.indexOf(b.code) === -1 ? 99 : first.indexOf(b.code)) || a.name.localeCompare(b.name));
-  for (const c of list) { const o = document.createElement('option'); o.value = `${c.code} — ${c.name}`; dl.append(o); }
+  for (const c of list) { const o = document.createElement('option'); o.value = `${c.code}, ${c.name}`; dl.append(o); }
 }
 
 renderFeatures(); refreshEnabled();
