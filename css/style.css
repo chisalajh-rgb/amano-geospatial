@@ -131,24 +131,8 @@ footer .brand .wm b{color:var(--cobalt)} footer .note a{color:var(--cobalt)}
 
 footer .wrap.copy{display:block;text-align:center;margin-top:22px;padding-top:16px;border-top:1px solid #dce9f2;font-size:13px}
 
-/* 3D scene: a scanned sheet above shaded terrain (real CSS 3D) */
-.scene3d{position:relative;aspect-ratio:400/280;border-radius:10px;overflow:hidden;container-type:inline-size;perspective:150cqw;perspective-origin:50% 30%;
-  background:linear-gradient(180deg,#d6ebf8 0%,#f3f9fd 70%,#ffffff 100%)}
-.scene3d .world{position:absolute;left:50%;top:60%;width:58%;aspect-ratio:4/3;transform:translate(-50%,-50%) rotateX(58deg) rotateZ(-34deg);transform-style:preserve-3d;--lift:17cqw}
-.scene3d .plane{position:absolute;inset:0;transform-style:preserve-3d}
-.scene3d img{display:block;width:100%;height:100%;object-fit:cover}
-.scene3d .ground{box-shadow:0 0 0 1px #24506b,2.4cqw 2.4cqw 5cqw rgba(28,47,59,.38)}
-.scene3d .ground::after{content:"";position:absolute;inset:0;transform:translateZ(-1.4cqw);background:#5b8fb3;box-shadow:0 0 0 1px #24506b}
-.scene3d .sheet{transform:translateZ(var(--lift));animation:sc-float 6s ease-in-out infinite;box-shadow:0 0 0 1px rgba(28,47,59,.5)}
-.scene3d .sheet img{opacity:.93}
-.scene3d .tie{position:absolute;width:.5cqw;height:var(--lift);transform-origin:50% 0;transform:rotateX(90deg) rotateY(-34deg);
-  background:repeating-linear-gradient(180deg,#24506b 0 .9cqw,transparent .9cqw 1.7cqw);animation:sc-flow 1.2s linear infinite}
-.scene3d .t1{left:0;top:0}.scene3d .t2{right:0;top:0}.scene3d .t3{right:0;top:100%}.scene3d .t4{left:0;top:100%}
-.scene3d .cp{position:absolute;width:2.6cqw;height:2.6cqw;margin:-1.3cqw;border-radius:50%;background:#4a94c4;border:.45cqw solid #fff;box-shadow:0 0 0 .25cqw #24506b,0 0 2.4cqw .6cqw rgba(74,148,196,.8);animation:sc-pulse 2.4s ease-in-out infinite}
-.scene3d .c1{left:0;top:0}.scene3d .c2{left:100%;top:0}.scene3d .c3{left:100%;top:100%}.scene3d .c4{left:0;top:100%}
-.scene3d .scanline{position:absolute;left:0;right:0;top:0;height:7%;background:linear-gradient(180deg,transparent,rgba(140,196,232,.55) 70%,#ffffff);border-bottom:.35cqw solid #4a94c4;animation:sc-scan 5s ease-in-out infinite}
-@keyframes sc-float{0%,100%{transform:translateZ(var(--lift))}50%{transform:translateZ(calc(var(--lift) + 1.6cqw))}}
-@keyframes sc-scan{0%,100%{top:0}50%{top:93%}}
-@keyframes sc-pulse{0%,100%{opacity:1}50%{opacity:.55}}
-@keyframes sc-flow{to{background-position:0 1.7cqw}}
-@media (prefers-reduced-motion:reduce){.scene3d .sheet,.scene3d .tie,.scene3d .cp,.scene3d .scanline{animation:none}}
+/* product screenshot in the "Why Amano" section */
+.mapcard a{display:block}
+.mapcard .appshot{display:block;width:100%;height:auto;border-radius:10px}
+.why .two{grid-template-columns:.8fr 1.2fr}
+@media(max-width:860px){.why .two{grid-template-columns:1fr}}
